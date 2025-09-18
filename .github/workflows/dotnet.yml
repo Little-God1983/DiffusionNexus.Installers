@@ -5,6 +5,11 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ github.workspace }}  # repo root
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -14,12 +19,28 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
-      # CHANGE THIS to your actual solution/project path
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/global.json', '**/packages.lock.json') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # If your solution is at repo root:
+      #   SOLUTION_PATH: DiffusionNexus.Installers.sln
+      # If it's inside a folder (e.g., /DiffusionNexus.Installers):
+      #   SOLUTION_PATH: DiffusionNexus.Installers/DiffusionNexus.Installers.sln
+      - name: Set solution path
+        run: |
+          echo "SOLUTION_PATH=DiffusionNexus.Installers/DiffusionNexus.Installers.sln" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Restore
-        run: dotnet restore "/DiffusionNexus.Installers/DiffusionNexus.Installers.sln"
+        run: dotnet restore "$env:SOLUTION_PATH"
 
-      - name: Build
-        run: dotnet build "/DiffusionNexus.Installers/DiffusionNexus.Installers.sln" --no-restore --configuration Release
+      - name: Build (Release)
+        run: dotnet build "$env:SOLUTION_PATH" --no-restore --configuration Release
 
-      - name: Test
-        run: dotnet test "/DiffusionNexus.Installers/DiffusionNexus.Installers.sln" --no-build --configuration Release --verbosity normal
+      - name: Test (Release)
+        run: dotnet test "$env:SOLUTION_PATH" --no-build --configuration Release --verbosity normal
