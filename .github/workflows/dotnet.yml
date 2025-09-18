@@ -4,23 +4,22 @@ on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: windows-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup .NET 9
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'  # Make sure this matches your target SDK version
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore
+      # CHANGE THIS to your actual solution/project path
+      - name: Restore
+        run: dotnet restore "/DiffusionNexus.Installers/DiffusionNexus.Installers.sln"
 
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
+      - name: Build
+        run: dotnet build "/DiffusionNexus.Installers/DiffusionNexus.Installers.sln" --no-restore --configuration Release
 
-    - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Test
+        run: dotnet test "/DiffusionNexus.Installers/DiffusionNexus.Installers.sln" --no-build --configuration Release --verbosity normal
