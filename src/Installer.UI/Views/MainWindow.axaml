@@ -1,0 +1,100 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Installer.UI.Views.MainWindow"
+        Title="AIKnowledge2Go – Easy installer"
+        Width="700"
+        Height="520"
+        MinWidth="560"
+        MinHeight="420">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <Border Padding="20" Background="{DynamicResource ThemeBackgroundBrush}">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnDefinitions="*">
+                <TextBlock Text="AIKnowledge2Go – Easy installer"
+                           FontSize="20"
+                           FontWeight="SemiBold"/>
+
+                <TextBlock Grid.Row="1" Text="Install folder" Margin="0,16,0,4"/>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                    <TextBox Text="{Binding InstallRoot, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,8,0"/>
+                    <Button Content="Browse…" Command="{Binding BrowseCommand}" MinWidth="90"/>
+                </Grid>
+
+                <TextBlock Grid.Row="2" Text="Install script" Margin="0,16,0,4"/>
+                <ComboBox Grid.Row="2"
+                          ItemsSource="{Binding AvailableManifests}"
+                          SelectedItem="{Binding SelectedManifest}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Grid.Row="3" Text="VRAM profile" Margin="0,16,0,4"/>
+                <ComboBox Grid.Row="3"
+                          ItemsSource="{Binding AvailableVramProfiles}"
+                          SelectedItem="{Binding SelectedVramProfile}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <CheckBox Grid.Row="4"
+                          Content="Enable optional telemetry to help improve AIKnowledge2Go"
+                          IsChecked="{Binding TelemetryOptIn}"
+                          Margin="0,20,0,0"/>
+
+                <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="12" Margin="0,20,0,0">
+                    <Button Content="Install"
+                            Command="{Binding InstallCommand}"
+                            MinWidth="120"/>
+                    <TextBlock Text="{Binding CurrentStep}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="6" Margin="0,16,0,0" Spacing="6">
+                    <ProgressBar Minimum="0"
+                                 Maximum="100"
+                                 Value="{Binding ProgressPercent}"
+                                 IsIndeterminate="{Binding IsProgressIndeterminate}"/>
+                    <TextBlock Text="{Binding ProgressPercent, StringFormat='Progress: {0:F0}%'}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="7" Margin="0,16,0,0" Spacing="6">
+                    <TextBlock Text="Log" FontWeight="SemiBold"/>
+                    <Border BorderBrush="{DynamicResource ThemeBorderMidBrush}" BorderThickness="1" CornerRadius="4">
+                        <TextBox Text="{Binding LogText}"
+                                 AcceptsReturn="True"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 MinHeight="180"
+                                 IsReadOnly="True"
+                                 FontFamily="Consolas"
+                                 TextWrapping="NoWrap">
+                            <TextBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Copy all"
+                                              Command="{Binding DataContext.CopyLogCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </ContextMenu>
+                            </TextBox.ContextMenu>
+                        </TextBox>
+                    </Border>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Content="Copy log" Command="{Binding CopyLogCommand}"/>
+                        <Button Content="Export log…" Command="{Binding ExportLogCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <TextBlock Grid.Row="8"
+                           FontWeight="SemiBold"
+                           Text="{Binding StatusMessage}"
+                           Foreground="{Binding StatusMessageBrush}"
+                           Margin="0,16,0,0"/>
+            </Grid>
+        </Border>
+    </ScrollViewer>
+</Window>
