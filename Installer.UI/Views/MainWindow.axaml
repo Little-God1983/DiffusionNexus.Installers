@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AIKnowledge2Go.Installers.UI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="AIKnowledge2Go.Installers.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="700"
+        Height="540"
+        MinWidth="640"
+        MinHeight="480"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="AIKnowledge2Go – Easy installer">
+
+    <StackPanel Margin="16" Spacing="14">
+        <TextBlock Text="Install folder" FontWeight="SemiBold"/>
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox Text="{Binding InstallRoot, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <Button Content="Browse…"
+                    Command="{Binding BrowseCommand}"
+                    Grid.Column="1"/>
+        </Grid>
+
+        <TextBlock Text="Install script" FontWeight="SemiBold" Margin="0,8,0,0"/>
+        <ComboBox ItemsSource="{Binding AvailableManifests}"
+                  SelectedItem="{Binding SelectedManifest, Mode=TwoWay}"
+                  Width="360"/>
+
+        <TextBlock Text="VRAM profile" FontWeight="SemiBold" Margin="0,8,0,0"/>
+        <ComboBox ItemsSource="{Binding AvailableVramProfiles}"
+                  SelectedValue="{Binding SelectedVramProfileId, Mode=TwoWay}"
+                  SelectedValueBinding="{Binding Id}"
+                  Width="220"/>
+
+        <Button Content="Install"
+                Command="{Binding InstallCommand}"
+                HorizontalAlignment="Left"
+                Margin="0,8,0,0"/>
+
+        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0" VerticalAlignment="Center">
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Width="420"
+                         Height="20"
+                         Value="{Binding ProgressPercent}"
+                         IsIndeterminate="{Binding IsProgressIndeterminate}"/>
+            <TextBlock Text="{Binding ProgressStep}" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <TextBlock Text="Log" FontWeight="SemiBold" Margin="0,8,0,0"/>
+        <TextBox x:Name="LogTextBox"
+                 Text="{Binding LogText}"
+                 AcceptsReturn="True"
+                 IsReadOnly="True"
+                 Height="200"
+                 HorizontalAlignment="Stretch"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 FontFamily="Consolas"
+                 TextWrapping="NoWrap">
+            <TextBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy all" Click="OnCopyAllLog"/>
+                </ContextMenu>
+            </TextBox.ContextMenu>
+        </TextBox>
+
+        <Button Content="Export log…"
+                Command="{Binding ExportLogCommand}"
+                HorizontalAlignment="Right"/>
+    </StackPanel>
+</Window>

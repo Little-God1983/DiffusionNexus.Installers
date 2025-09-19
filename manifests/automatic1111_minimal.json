@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "id": "automatic1111_minimal",
+  "title": "Automatic1111 Starter Kit",
+  "description": "Minimal Automatic1111 setup with recommended extensions and models.",
+  "baseSoftware": {
+    "name": "Automatic1111",
+    "repo": "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
+    "ref": "master",
+    "target": "stable-diffusion-webui"
+  },
+  "dependencies": {
+    "python": "3.10",
+    "cuda": "11.8"
+  },
+  "models": [
+    {
+      "name": "DreamShaperXL",
+      "source": "civitai",
+      "url": "https://civitai.com/models/dreamshaperxl",
+      "target": "stable-diffusion-webui/models/Stable-diffusion"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "Civitai Helper",
+      "repo": "https://github.com/butaixianran/Stable-Diffusion-Webui-Civitai-Helper",
+      "target": "stable-diffusion-webui/extensions"
+    },
+    {
+      "name": "Dreambooth",
+      "repo": "https://github.com/d8ahazard/sd_dreambooth_extension",
+      "target": "stable-diffusion-webui/extensions"
+    }
+  ],
+  "optionalSteps": [
+    {
+      "id": "run_webui",
+      "description": "Launch Automatic1111",
+      "shell": "webui-user.bat",
+      "enabledByDefault": false
+    }
+  ]
+}

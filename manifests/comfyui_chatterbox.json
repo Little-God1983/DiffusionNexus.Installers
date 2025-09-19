@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0",
+  "id": "comfyui_chatterbox",
+  "title": "ComfyUI + Chatterbox (CUDA 12.8)",
+  "description": "Installs ComfyUI with the Chatterbox workflow and CUDA 12.8 dependencies.",
+  "baseSoftware": {
+    "name": "ComfyUI",
+    "repo": "https://github.com/comfyanonymous/ComfyUI",
+    "ref": "stable",
+    "target": "ComfyUI"
+  },
+  "dependencies": {
+    "python": "3.12",
+    "cuda": "12.8",
+    "pipRequirements": [
+      {
+        "relativeTo": "baseSoftware.target",
+        "path": "requirements.txt"
+      }
+    ]
+  },
+  "vramProfiles": [
+    {
+      "id": "8",
+      "label": "\u2264 8 GB VRAM",
+      "ggufPreference": ["Q4_K_M", "Q3_K_M", "Q3_K_L"],
+      "mixedBasicResolution": "fp16"
+    },
+    {
+      "id": "16",
+      "label": "16 GB VRAM",
+      "ggufPreference": ["Q6_K", "Q5_K_M", "Q4_K_M"],
+      "mixedBasicResolution": "fp16"
+    },
+    {
+      "id": "24",
+      "label": "24 GB VRAM",
+      "ggufPreference": ["Q6_K", "Q5_K_M", "Q4_K_M"],
+      "mixedBasicResolution": "fp32"
+    }
+  ],
+  "models": [
+    {
+      "name": "InfiniteTalk",
+      "source": "huggingface",
+      "repo": "Kijai/WanVideo_comfy_GGUF",
+      "match": "InfiniteTalk",
+      "prefer": ["Q6_K", "Q5_K_M"],
+      "target": "ComfyUI/models/diffusion_models"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "rgthree-comfy",
+      "repo": "https://github.com/rgthree/rgthree-comfy",
+      "target": "ComfyUI/custom_nodes"
+    },
+    {
+      "name": "ComfyUI-KJNodes",
+      "repo": "https://github.com/kijai/ComfyUI-KJNodes",
+      "target": "ComfyUI/custom_nodes"
+    }
+  ],
+  "optionalSteps": [
+    {
+      "id": "install_node_requirements",
+      "description": "Install custom node requirements",
+      "shell": "{python} -m pip install -r requirements.txt",
+      "workingDir": "<extensionPath>",
+      "enabledByDefault": true
+    },
+    {
+      "id": "launch",
+      "description": "Launch ComfyUI after install",
+      "shell": "{python} ComfyUI/main.py",
+      "enabledByDefault": false
+    }
+  ]
+}

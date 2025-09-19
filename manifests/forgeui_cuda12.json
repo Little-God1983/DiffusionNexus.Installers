@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "id": "forgeui_cuda12",
+  "title": "ForgeUI Stable Diffusion (CUDA 12.1)",
+  "description": "Installs ForgeUI with CUDA 12.1 runtime and curated extensions.",
+  "baseSoftware": {
+    "name": "ForgeUI",
+    "repo": "https://github.com/lllyasviel/ForgeUI",
+    "ref": "main",
+    "target": "ForgeUI"
+  },
+  "dependencies": {
+    "python": "3.10",
+    "cuda": "12.1",
+    "pipRequirements": [
+      {
+        "relativeTo": "baseSoftware.target",
+        "path": "requirements.txt"
+      }
+    ]
+  },
+  "models": [
+    {
+      "name": "SDXL Base",
+      "source": "civitai",
+      "url": "https://civitai.com/models/sdxl-base",
+      "target": "ForgeUI/models/checkpoints"
+    },
+    {
+      "name": "SDXL Refiner",
+      "source": "civitai",
+      "url": "https://civitai.com/models/sdxl-refiner",
+      "target": "ForgeUI/models/checkpoints"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "ControlNet",
+      "repo": "https://github.com/Mikubill/sd-webui-controlnet",
+      "target": "ForgeUI/extensions"
+    },
+    {
+      "name": "Tiled VAE",
+      "repo": "https://github.com/pkuliyi2015/multidiffusion-upscaler-for-automatic1111",
+      "target": "ForgeUI/extensions"
+    }
+  ],
+  "optionalSteps": [
+    {
+      "id": "forgeui_launch",
+      "description": "Launch ForgeUI",
+      "shell": "{python} ForgeUI/launch.py",
+      "enabledByDefault": false
+    }
+  ]
+}
