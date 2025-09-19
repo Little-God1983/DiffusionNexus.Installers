@@ -4,6 +4,7 @@ AIKnowledge2Go – Easy Installer is a cross-platform Avalonia UI application th
 
 ## Solution layout
 
+- `DiffusionNexus.Installers/DiffusionNexus.Installers.sln` – the single solution used locally and by the GitHub pipeline. It references all projects in this repository.
 - `Installer.Core` – domain models, manifest loader, logging utilities, and the mock installer engine.
 - `Installer.UI` – Avalonia desktop application that provides the MVVM UI and user interactions.
 - `Installer.Tests` – xUnit test project with unit coverage for the manifest loader and installer engine.
@@ -18,9 +19,8 @@ AIKnowledge2Go – Easy Installer is a cross-platform Avalonia UI application th
 Restore dependencies and run the application:
 
 ```bash
-dotnet restore
-cd Installer.UI
-dotnet run
+dotnet restore DiffusionNexus.Installers/DiffusionNexus.Installers.sln
+dotnet run --project Installer.UI/Installer.UI.csproj
 ```
 
 The UI automatically discovers manifests placed in the `manifests/` folder (also copied to the output directory on build). Select an install directory, choose a manifest, optionally pick a VRAM profile, then click **Install** to execute the scripted install. Logs stream live in the UI and are written to disk.
@@ -37,10 +37,10 @@ dotnet publish Installer.UI/Installer.UI.csproj \
 
 ## Testing
 
-Run the unit tests from the solution root:
+Run the unit tests:
 
 ```bash
-dotnet test
+dotnet test DiffusionNexus.Installers/DiffusionNexus.Installers.sln
 ```
 
 ## Manifest authoring
