@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace DiffusionNexus.Core.Models
 {
     /// <summary>
-    /// Model download configuration
+    /// Model download configuration authored by the UI.
     /// </summary>
     public class ModelDownload
     {
@@ -15,22 +16,22 @@ namespace DiffusionNexus.Core.Models
         [Required]
         public string Url { get; set; } = string.Empty;
 
-        public ModelSource Source { get; set; } = ModelSource.HuggingFace;
-        public ModelType Type { get; set; } = ModelType.Checkpoint;
-        public string Destination { get; set; } = string.Empty; // Relative path
-        public string FileName { get; set; } = string.Empty; // Override filename
-        public long ExpectedSize { get; set; } = 0; // In bytes
-        public string Sha256Hash { get; set; } = string.Empty; // For verification
+        /// <summary>
+        /// Optional override for where the file should be placed. When empty the
+        /// engine uses <see cref="InstallationConfiguration.Paths"/> to determine
+        /// the destination.
+        /// </summary>
+        public string Destination { get; set; } = string.Empty;
+
+        /// <summary>
+        /// VRAM profile influences the default folder resolution. Custom allows the
+        /// user to bypass the automatic mapping logic.
+        /// </summary>
+        public VramProfile VramProfile { get; set; } = VramProfile.VRAM_16GB;
+
+        /// <summary>
+        /// Allows authors to opt-out of model downloads without deleting them.
+        /// </summary>
         public bool Enabled { get; set; } = true;
-        public int Priority { get; set; } = 0;
-
-        // For GGUF models
-        public GgufSettings GgufSettings { get; set; } = null;
-
-        // Download options
-        public int MaxRetries { get; set; } = 5;
-        public int RetryDelaySeconds { get; set; } = 2;
-        public bool VerifyChecksum { get; set; } = false;
-        public List<string> Tags { get; set; } = new();
     }
 }
