@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DiffusionNexus.Core.Models\DiffusionNexus.Core.Models.csproj" />
+  </ItemGroup>
+
 </Project>

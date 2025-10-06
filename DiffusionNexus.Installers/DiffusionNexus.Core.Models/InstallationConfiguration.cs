@@ -62,8 +62,8 @@ namespace DiffusionNexus.Core.Models
     public class PythonEnvironmentSettings
     {
         [Required]
-        [Range(3.8, 3.12)]
-        public double PythonVersion { get; set; } = 3.11;
+        [Range(3.8, 3.13)]
+        public double PythonVersion { get; set; } = 3.12;
 
         public string PythonPath { get; set; } = string.Empty; // Empty means use system python
         public bool CreateVirtualEnvironment { get; set; } = true;
