@@ -1,37 +1,56 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace DiffusionNexus.Core.Models
 {
     /// <summary>
-    /// Main configuration class that holds all installation settings
+    /// Represents a full installer configuration used by both the UI authoring tool
+    /// and the headless installation engine.
     /// </summary>
     public class InstallationConfiguration
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; } = "Default Configuration";
+
+        /// <summary>
+        /// Friendly name to help users distinguish between saved configurations.
+        /// </summary>
+        public string Name { get; set; } = "New Configuration";
+
+        /// <summary>
+        /// Description displayed in the UI when loading an existing configuration.
+        /// </summary>
         public string Description { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
 
-        // Core Settings
-        public MainRepositorySettings MainRepository { get; set; } = new();
-        public PythonEnvironmentSettings PythonEnvironment { get; set; } = new();
-        public HardwareSettings Hardware { get; set; } = new();
+        public MainRepositorySettings Repository { get; set; } = new();
+
+        public PythonEnvironmentSettings Python { get; set; } = new();
+
+        /// <summary>
+        /// Torch and CUDA selections are authored separately from Python because
+        /// they may change independently of interpreter selection.
+        /// </summary>
+        public TorchSettings Torch { get; set; } = new();
+
+        /// <summary>
+        /// Ordered list of repositories that must be cloned after the primary
+        /// repository. Priority values are derived from the current ordering.
+        /// </summary>
+        public List<GitRepository> GitRepositories { get; set; } = new();
+
+        /// <summary>
+        /// Models that should be downloaded after repositories are prepared.
+        /// </summary>
+        public List<ModelDownload> ModelDownloads { get; set; } = new();
+
+        /// <summary>
+        /// Paths that influence where repositories, models and logs are written.
+        /// </summary>
         public PathSettings Paths { get; set; } = new();
-
-        // Components to Install
-        public List<GitRepository> CustomNodes { get; set; } = new();
-        public List<ModelDownload> Models { get; set; } = new();
-        public List<CustomCommand> PostInstallCommands { get; set; } = new();
-
-        // Installation Options
-        public InstallationOptions Options { get; set; } = new();
     }
 
     /// <summary>
-    /// Main repository settings (ComfyUI, Forge, A1111, etc.)
+    /// Primary software selector (ComfyUI, Automatic1111, Forge, etc.).
     /// </summary>
     public class MainRepositorySettings
     {
@@ -39,161 +58,98 @@ namespace DiffusionNexus.Core.Models
         public RepositoryType Type { get; set; } = RepositoryType.ComfyUI;
 
         [Required]
-        public string RepositoryUrl { get; set; } = "https://github.com/comfyanonymous/ComfyUI";
+        public string RepositoryUrl { get; set; } = string.Empty;
 
-        public string Branch { get; set; } = string.Empty; // Empty means latest release or main
-        public string CommitHash { get; set; } = string.Empty; // Specific commit if needed
-        public bool UseLatestRelease { get; set; } = true;
-        public bool ShallowClone { get; set; } = true;
-        public int CloneDepth { get; set; } = 1;
+        public string Branch { get; set; } = string.Empty;
+
+        public string CommitHash { get; set; } = string.Empty;
     }
 
     public enum RepositoryType
     {
         ComfyUI,
-        StableDiffusionWebUI, // A1111
-        StableDiffusionWebUIForge,
-        Custom
+        A1111,
+        Forge
     }
 
     /// <summary>
-    /// Python environment configuration
+    /// Python environment configuration.
     /// </summary>
     public class PythonEnvironmentSettings
     {
+        /// <summary>
+        /// Semantic version (e.g. 3.10) represented as a string to preserve the
+        /// exact value chosen in the UI.
+        /// </summary>
         [Required]
-        [Range(3.8, 3.13)]
-        public double PythonVersion { get; set; } = 3.12;
+        public string PythonVersion { get; set; } = "3.12";
 
-        public string PythonPath { get; set; } = string.Empty; // Empty means use system python
+        /// <summary>
+        /// Optional override to an existing interpreter on disk. Empty string
+        /// indicates the installer should use the default interpreter for the
+        /// selected version.
+        /// </summary>
+        public string InterpreterPathOverride { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Controls whether the installer will create and manage a virtual
+        /// environment.
+        /// </summary>
         public bool CreateVirtualEnvironment { get; set; } = true;
-        public string VenvName { get; set; } = "venv";
-        public bool UpgradePip { get; set; } = true;
 
-        // PyTorch Settings
-        public TorchSettings Torch { get; set; } = new();
-
-        // Additional packages
-        public List<PipPackage> AdditionalPackages { get; set; } = new();
+        /// <summary>
+        /// When <see cref="CreateVirtualEnvironment"/> is true this allows the
+        /// user to override the folder name that will be created.
+        /// </summary>
+        public string VirtualEnvironmentName { get; set; } = "venv";
     }
 
     /// <summary>
-    /// PyTorch/CUDA configuration
+    /// Torch/CUDA settings used to install the appropriate binaries.
     /// </summary>
     public class TorchSettings
     {
-        public string TorchVersion { get; set; } = "latest";
-        public CudaVersion CudaVersion { get; set; } = CudaVersion.Cuda128;
-        public string IndexUrl { get; set; } = "https://download.pytorch.org/whl/cu128";
-        public bool InstallTorchVision { get; set; } = true;
-        public bool InstallTorchAudio { get; set; } = true;
-        public bool VerifyCudaVersion { get; set; } = true;
-    }
+        /// <summary>
+        /// User supplied Torch version. Empty string means "latest".
+        /// </summary>
+        public string TorchVersion { get; set; } = string.Empty;
 
-    public enum CudaVersion
-    {
-        Cpu,
-        Cuda118,
-        Cuda121,
-        Cuda124,
-        Cuda128,
-        Rocm56,
-        Rocm60
+        /// <summary>
+        /// CUDA version string (e.g. "12.8").
+        /// </summary>
+        public string CudaVersion { get; set; } = "12.8";
+
+        /// <summary>
+        /// Optional custom index URL. If null or empty the engine derives an
+        /// appropriate value from <see cref="CudaVersion"/>.
+        /// </summary>
+        public string? IndexUrl { get; set; }
+ = string.Empty;
     }
 
     /// <summary>
-    /// Hardware/VRAM configuration
+    /// Download targets may use VRAM profiles to select destination folders.
     /// </summary>
-    public class HardwareSettings
-    {
-        public VramProfile VramProfile { get; set; } = VramProfile.GB_16;
-        public int CustomVramMB { get; set; } = 0; // If custom amount
-        public List<string> GgufPreferences { get; set; } = new();
-        public ModelPrecision DefaultPrecision { get; set; } = ModelPrecision.FP16;
-        public bool UseGpu { get; set; } = true;
-        public int GpuIndex { get; set; } = 0;
-    }
-
     public enum VramProfile
     {
-        GB_4,
-        GB_6,
-        GB_8,
-        GB_12,
-        GB_16,
-        GB_24,
-        GB_32,
-        GB_48,
+        VRAM_8GB,
+        VRAM_12GB,
+        VRAM_16GB,
+        VRAM_24GB,
         Custom
     }
 
-    public enum ModelPrecision
-    {
-        FP32,
-        FP16,
-        BF16,
-        INT8,
-        INT4
-    }
-
     /// <summary>
-    /// Installation paths configuration
+    /// General file system settings for the installation.
     /// </summary>
     public class PathSettings
     {
         [Required]
-        public string RootDirectory { get; set; } = @"C:\ComfyUI";
-        public string LogFile { get; set; } = "install.log";
+        public string RootDirectory { get; set; } = string.Empty;
 
-        // Model directories (relative to RootDirectory if not absolute)
-        public Dictionary<string, string> ModelPaths { get; set; } = new()
-        {
-            ["checkpoints"] = "models/checkpoints",
-            ["loras"] = "models/loras",
-            ["vae"] = "models/vae",
-            ["text_encoders"] = "models/text_encoders",
-            ["clip_vision"] = "models/clip_vision",
-            ["diffusion_models"] = "models/diffusion_models",
-            ["embeddings"] = "models/embeddings",
-            ["controlnet"] = "models/controlnet",
-            ["upscale_models"] = "models/upscale_models"
-        };
+        public string? DefaultModelDownloadDirectory { get; set; }
+            = string.Empty;
 
-        public string CustomNodesPath { get; set; } = "custom_nodes";
-        public string OutputPath { get; set; } = "output";
-        public string InputPath { get; set; } = "input";
-        public string TempPath { get; set; } = "temp";
-    }
-
-    public enum ModelSource
-    {
-        HuggingFace,
-        CivitAI,
-        DirectUrl,
-        LocalFile,
-        GitLfs
-    }
-
-    public enum ModelType
-    {
-        Checkpoint,
-        Lora,
-        Vae,
-        TextEncoder,
-        ClipVision,
-        Diffusion,
-        Embedding,
-        ControlNet,
-        Upscaler,
-        Other
-    }
-
-    public enum LogLevel
-    {
-        Debug,
-        Info,
-        Warning,
-        Error,
-        Fatal
+        public string LogFileName { get; set; } = "install.log";
     }
 }

@@ -3,18 +3,255 @@
         xmlns:vm="using:DiffusionNexus.Installers.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d"
         x:Class="DiffusionNexus.Installers.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="DiffusionNexus.Installers">
-
+        Title="Diffusion Nexus Installer">
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
+        <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" Command="{Binding NewConfigurationCommand}" />
+                <MenuItem Header="_Open" Command="{Binding OpenCommand}" />
+                <MenuItem Header="_Save" Command="{Binding SaveCommand}" />
+                <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
+            </MenuItem>
+        </Menu>
 
+        <Grid RowDefinitions="Auto,Auto,Auto,250" ColumnDefinitions="*">
+            <ScrollViewer Grid.Row="0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="16" Spacing="16">
+                    <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Repository"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                <TextBlock Text="Repository Type" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding RepositoryTypes}"
+                                          SelectedItem="{Binding SelectedRepositoryType}" />
+                                <TextBlock Grid.Row="1" Text="Repository URL" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding RepositoryUrl, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Python Environment"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                <TextBlock Text="Python Version" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding PythonVersions}"
+                                          SelectedItem="{Binding SelectedPythonVersion}" />
+                                <TextBlock Grid.Row="1" Text="Interpreter Override" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding InterpreterPathOverride, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Row="1" Grid.Column="2" Content="Browse"
+                                        Command="{Binding BrowseInterpreterCommand}" />
+                                <CheckBox Grid.Row="2"
+                                          Content="Create virtual environment"
+                                          IsChecked="{Binding CreateVirtualEnvironment}" />
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Watermark="venv name"
+                                         IsEnabled="{Binding CreateVirtualEnvironment}"
+                                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Paths"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                <TextBlock Text="Workspace Root" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding RootDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Column="2" Content="Browse" Command="{Binding BrowseRootDirectoryCommand}" />
+                                <TextBlock Grid.Row="1" Text="Default Model Directory" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding DefaultModelDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Row="1"
+                                        Grid.Column="2"
+                                        Content="Browse"
+                                        Command="{Binding BrowseModelDirectoryCommand}" />
+                                <TextBlock Grid.Row="2" Text="Log File" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Text="{Binding LogFileName, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Git Repositories"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <DataGrid ItemsSource="{Binding GitRepositories}"
+                                      SelectedItem="{Binding SelectedRepository, Mode=TwoWay}"
+                                      AutoGenerateColumns="False"
+                                      HeadersVisibility="Column"
+                                      Margin="0,0,0,8">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding Priority}" IsReadOnly="True" Width="40" />
+                                    <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" Width="120" />
+                                    <DataGridTextColumn Header="Url" Binding="{Binding Url, Mode=TwoWay}" Width="*" />
+                                    <DataGridCheckBoxColumn Header="Install Requirements"
+                                                            Binding="{Binding InstallRequirements, Mode=TwoWay}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Content="Add" Command="{Binding AddRepositoryCommand}" />
+                                <Button Content="Remove" Command="{Binding RemoveRepositoryCommand}" />
+                                <Button Content="Move Up" Command="{Binding MoveRepositoryUpCommand}" />
+                                <Button Content="Move Down" Command="{Binding MoveRepositoryDownCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Model Downloads"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <DataGrid ItemsSource="{Binding ModelDownloads}"
+                                      SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
+                                      AutoGenerateColumns="False"
+                                      HeadersVisibility="Column"
+                                      Margin="0,0,0,8"
+                                      Tag="{Binding VramProfiles}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" Width="160" />
+                                    <DataGridTextColumn Header="Url" Binding="{Binding Url, Mode=TwoWay}" Width="*" />
+                                    <DataGridTextColumn Header="Destination" Binding="{Binding Destination, Mode=TwoWay}" Width="200" />
+                                    <DataGridTemplateColumn Header="VRAM Profile" Width="140">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding $parent[DataGrid].Tag}"
+                                                          SelectedItem="{Binding VramProfile, Mode=TwoWay}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridCheckBoxColumn Header="Enabled" Binding="{Binding Enabled, Mode=TwoWay}" Width="80" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Content="Add" Command="{Binding AddModelCommand}" />
+                                <Button Content="Remove" Command="{Binding RemoveModelCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="CUDA &amp; Torch"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                <TextBlock Text="CUDA Version" VerticalAlignment="Center" />
+                                <AutoCompleteBox Grid.Column="1"
+                                                  ItemsSource="{Binding SuggestedCudaVersions}"
+                                                  Text="{Binding CudaVersion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="1" Text="Torch Version" VerticalAlignment="Center" />
+                                <AutoCompleteBox Grid.Row="1"
+                                                  Grid.Column="1"
+                                                  ItemsSource="{Binding SuggestedTorchVersions}"
+                                                  Text="{Binding TorchVersion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="2" Text="Index URL" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Text="{Binding TorchIndexUrl, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="3"
+                                           Grid.ColumnSpan="2"
+                                           Text="{Binding TorchCompatibilityHint}"
+                                           TextWrapping="Wrap" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Content="Preview Plan" Command="{Binding PreviewPlanCommand}" />
+                        <Button Content="Dry Run" Command="{Binding DryRunCommand}" />
+                        <Button Content="Install" Command="{Binding InstallCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="1" Margin="16,0" Background="{DynamicResource ThemeControlLowBrush}" Height="1" />
+
+            <TextBlock Grid.Row="2"
+                       Margin="16,8"
+                       Foreground="{DynamicResource ThemeForegroundBrush}"
+                       Text="{Binding ValidationSummary}"
+                       TextWrapping="Wrap" />
+
+            <Grid Grid.Row="3" ColumnDefinitions="*,*" Margin="16" ColumnSpacing="16">
+                <Border Padding="12"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Preview Plan"
+                                   FontSize="16"
+                                   FontWeight="SemiBold" />
+                        <TextBox Text="{Binding PreviewPlan}"
+                                 AcceptsReturn="True"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                    </StackPanel>
+                </Border>
+                <Border Padding="12"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Logs"
+                                   FontSize="16"
+                                   FontWeight="SemiBold" />
+                        <ListBox ItemsSource="{Binding Logs}"
+                                 SelectedItem="{Binding SelectedLogEntry, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Display}" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
 </Window>
