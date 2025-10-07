@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using DiffusionNexus.Core.Models;
 using DiffusionNexus.Installers.ViewModels;
 
 namespace DiffusionNexus.Installers.Views
@@ -30,6 +31,7 @@ namespace DiffusionNexus.Installers.Views
             if (DataContext is MainWindowViewModel vm)
             {
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
+                vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
                 vm.EditRepositoryRequested += OnEditRepositoryRequested;
                 _attachedViewModel = vm;
             }
@@ -146,6 +148,46 @@ namespace DiffusionNexus.Installers.Views
 
                 var results = await _window.StorageProvider.OpenFilePickerAsync(options);
                 return results?.FirstOrDefault()?.TryGetLocalPath();
+            }
+        }
+
+        private sealed class AvaloniaGitRepositoryInteractionService : IGitRepositoryInteractionService
+        {
+            private readonly Window _window;
+
+            public AvaloniaGitRepositoryInteractionService(Window window)
+            {
+                _window = window;
+            }
+
+            public Task<GitRepository?> CreateRepositoryAsync()
+            {
+                var draft = new GitRepository();
+                var dialog = new GitRepositoryEditorWindow(draft, isNew: true);
+                return dialog.ShowDialog<GitRepository?>(_window);
+            }
+
+            public async Task<GitRepository?> EditRepositoryAsync(GitRepository repository)
+            {
+                var draft = new GitRepository
+                {
+                    Id = repository.Id,
+                    Name = repository.Name,
+                    Url = repository.Url,
+                    InstallRequirements = repository.InstallRequirements,
+                    Priority = repository.Priority
+                };
+
+                var dialog = new GitRepositoryEditorWindow(draft, isNew: false);
+                var result = await dialog.ShowDialog<GitRepository?>(_window);
+                if (result is null)
+                {
+                    return null;
+                }
+
+                result.Id = repository.Id;
+                result.Priority = repository.Priority;
+                return result;
             }
         }
     }
