@@ -468,6 +468,37 @@ namespace DiffusionNexus.Installers.ViewModels
         }
 
         [RelayCommand]
+        private void EditRepository(GitRepositoryItemViewModel? repository)
+        {
+            if (repository is null)
+            {
+                return;
+            }
+
+            SelectedRepository = repository;
+        }
+
+        [RelayCommand]
+        private void DeleteRepository(GitRepositoryItemViewModel? repository)
+        {
+            if (repository is null)
+            {
+                return;
+            }
+
+            _configuration.GitRepositories.Remove(repository.Model);
+            GitRepositories.Remove(repository);
+
+            if (SelectedRepository == repository)
+            {
+                SelectedRepository = null;
+            }
+
+            UpdateRepositoryPriorities();
+            MarkDirty();
+        }
+
+        [RelayCommand]
         private void AddModel()
         {
             var model = new ModelDownload
