@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DiffusionNexus.Installers.Views.GitRepositoryEditorWindow"
+        Width="420"
+        MaxWidth="420"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+        <StackPanel Grid.Row="0" Spacing="8">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Display Name" />
+                <TextBox x:Name="NameTextBox" Watermark="Optional" MinWidth="360" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <TextBlock Text="Repository URL" />
+                <TextBox x:Name="UrlTextBox" MinWidth="360" />
+            </StackPanel>
+            <CheckBox x:Name="InstallRequirementsCheckBox"
+                      Content="Install requirements after cloning" />
+        </StackPanel>
+
+        <TextBlock x:Name="ValidationMessage"
+                   Grid.Row="1"
+                   Foreground="Red"
+                   FontSize="12" />
+
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8">
+            <Button Content="Cancel"
+                    Click="OnCancelClick" />
+            <Button Content="Save"
+                    IsDefault="True"
+                    Click="OnSaveClick" />
+        </StackPanel>
+    </Grid>
+</Window>
