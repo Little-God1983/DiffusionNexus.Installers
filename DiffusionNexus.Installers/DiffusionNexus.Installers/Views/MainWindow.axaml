@@ -125,6 +125,20 @@
                                     <DataGridTextColumn Header="Url" Binding="{Binding Url, Mode=TwoWay}" Width="*" />
                                     <DataGridCheckBoxColumn Header="Install Requirements"
                                                             Binding="{Binding InstallRequirements, Mode=TwoWay}" />
+                                    <DataGridTemplateColumn Header="Actions" Width="140">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                                    <Button Content="Edit"
+                                                            Command="{Binding $parent[DataGrid].DataContext.EditRepositoryCommand}"
+                                                            CommandParameter="{Binding .}" />
+                                                    <Button Content="Delete"
+                                                            Command="{Binding $parent[DataGrid].DataContext.DeleteRepositoryCommand}"
+                                                            CommandParameter="{Binding .}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
