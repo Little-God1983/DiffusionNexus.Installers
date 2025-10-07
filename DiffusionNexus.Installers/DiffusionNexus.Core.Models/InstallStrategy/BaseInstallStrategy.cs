@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Serilog;
 
 namespace DiffusionNexus.Core.Models.InstallStrategy
 {
@@ -13,11 +13,9 @@ namespace DiffusionNexus.Core.Models.InstallStrategy
         public abstract string ApplicationName { get; }
         public abstract string Version { get; }
 
-        protected readonly ILogger<BaseInstallStrategy> _logger;
-
-        protected BaseInstallStrategy(ILogger<BaseInstallStrategy> logger)
+        protected BaseInstallStrategy()
         {
-            _logger = logger;
+
         }
 
         public abstract Task<InstallResult> InstallAsync(InstallContext context, IProgress<InstallProgress> progress);
@@ -41,7 +39,7 @@ namespace DiffusionNexus.Core.Models.InstallStrategy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to uninstall {App}", ApplicationName);
+                Log.Error(ex, "Failed to uninstall {App}", ApplicationName);
                 return false;
             }
         }

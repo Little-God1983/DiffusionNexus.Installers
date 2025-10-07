@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +15,7 @@ namespace DiffusionNexus.Core.Models.InstallStrategy
 
         private const string REPO_URL = "https://github.com/comfyanonymous/ComfyUI.git";
 
-        public ComfyUIInstallStrategy(ILogger<BaseInstallStrategy> logger) : base(logger) { }
+        public ComfyUIInstallStrategy() : base() { }
 
         public override async Task<InstallResult> InstallAsync(InstallContext context, IProgress<InstallProgress> progress)
         {
@@ -75,7 +76,7 @@ namespace DiffusionNexus.Core.Models.InstallStrategy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to install ComfyUI");
+                Log.Error(ex, "Failed to install ComfyUI");
                 result.Errors.Add(ex.Message);
             }
 
@@ -111,7 +112,7 @@ namespace DiffusionNexus.Core.Models.InstallStrategy
 
         private const string REPO_URL = "https://github.com/AUTOMATIC1111/stable-diffusion-webui.git";
 
-        public Automatic1111InstallStrategy(ILogger<BaseInstallStrategy> logger) : base(logger) { }
+        public Automatic1111InstallStrategy() : base() { }
 
         public override async Task<InstallResult> InstallAsync(InstallContext context, IProgress<InstallProgress> progress)
         {
@@ -158,7 +159,7 @@ namespace DiffusionNexus.Core.Models.InstallStrategy
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to install Automatic1111");
+                Log.Error(ex, "Failed to install Automatic1111");
                 result.Errors.Add(ex.Message);
             }
 

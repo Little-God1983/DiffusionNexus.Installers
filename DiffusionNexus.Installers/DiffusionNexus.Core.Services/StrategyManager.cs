@@ -5,23 +5,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace DiffusionNexus.Core.Services
 {
     public class InstallerManager
     {
         private readonly Dictionary<string, IInstallStrategy> _strategies;
-        private readonly ILogger<InstallerManager> _logger;
         private IInstallStrategy _currentStrategy;
 
-        public InstallerManager(ILogger<InstallerManager> logger, IServiceProvider serviceProvider)
+        public InstallerManager()
         {
-            _logger = logger;
             _strategies = new Dictionary<string, IInstallStrategy>();
 
             // Register available strategies
-            RegisterStrategy("ComfyUI", serviceProvider.GetService<ComfyUIInstallStrategy>());
-            RegisterStrategy("Automatic1111", serviceProvider.GetService<Automatic1111InstallStrategy>());
+            RegisterStrategy("ComfyUI", new ComfyUIInstallStrategy());
+            RegisterStrategy("Automatic1111", new Automatic1111InstallStrategy());
             // Add more strategies as needed
         }
 
@@ -49,7 +48,7 @@ namespace DiffusionNexus.Core.Services
                 throw new InvalidOperationException("No installation strategy selected");
             }
 
-            _logger.LogInformation("Starting installation of {App}", _currentStrategy.ApplicationName);
+            Log.Information("Starting installation of {App}", _currentStrategy.ApplicationName);
 
             // Validate prerequisites
             if (!await _currentStrategy.ValidatePrerequisitesAsync())
