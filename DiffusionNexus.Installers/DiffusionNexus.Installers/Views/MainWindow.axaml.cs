@@ -10,18 +10,44 @@ namespace DiffusionNexus.Installers.Views
 {
     public partial class MainWindow : Window
     {
+        private readonly DataGrid? _gitRepositoriesGrid;
+        private MainWindowViewModel? _attachedViewModel;
+
         public MainWindow()
         {
             InitializeComponent();
+            _gitRepositoriesGrid = this.FindControl<DataGrid>("GitRepositoriesGrid");
             DataContextChanged += OnDataContextChanged;
         }
 
         private void OnDataContextChanged(object? sender, EventArgs e)
         {
+            if (_attachedViewModel is not null)
+            {
+                _attachedViewModel.EditRepositoryRequested -= OnEditRepositoryRequested;
+            }
+
             if (DataContext is MainWindowViewModel vm)
             {
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
+                vm.EditRepositoryRequested += OnEditRepositoryRequested;
+                _attachedViewModel = vm;
             }
+            else
+            {
+                _attachedViewModel = null;
+            }
+        }
+
+        private void OnEditRepositoryRequested(object? sender, GitRepositoryItemViewModel repository)
+        {
+            if (_gitRepositoriesGrid is null)
+            {
+                return;
+            }
+
+            _gitRepositoriesGrid.SelectedItem = repository;
+            _gitRepositoriesGrid.Focus();
         }
 
         private sealed class AvaloniaStorageInteractionService : IStorageInteractionService
