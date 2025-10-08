@@ -403,7 +403,7 @@ namespace DiffusionNexus.Installers.ViewModels
         {
             var repo = new GitRepository
             {
-                Priority = GitRepositories.Count + 1,
+                Priority = _configuration.GitRepositories.Count + 1,
                 InstallRequirements = true
             };
 
@@ -417,10 +417,9 @@ namespace DiffusionNexus.Installers.ViewModels
                 }
             }
 
-            GitRepositories.Add(vm);
             _configuration.GitRepositories.Add(repo);
-            UpdateRepositoryPriorities();
-            SelectedRepository = vm;
+            ReloadCollectionsFromConfiguration();
+            SelectedRepository = GitRepositories.FirstOrDefault(r => r.Model == repo);
             MarkDirty();
         }
 
