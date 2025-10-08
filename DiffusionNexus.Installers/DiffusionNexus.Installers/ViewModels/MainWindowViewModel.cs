@@ -27,6 +27,10 @@ namespace DiffusionNexus.Installers.ViewModels
         private ConfigurationFormat? _currentFormat;
         private IStorageInteractionService? _storageInteraction;
 
+        public event EventHandler<GitRepositoryItemViewModel>? EditRepositoryRequested;
+
+        public Func<GitRepositoryEditorViewModel, bool, Task<bool>>? RepositoryEditorAsync { get; set; }
+
         public MainWindowViewModel()
         {
             GitRepositories = new ObservableCollection<GitRepositoryItemViewModel>();
@@ -395,17 +399,26 @@ namespace DiffusionNexus.Installers.ViewModels
         }
 
         [RelayCommand]
-        private void AddRepository()
+        private async Task AddRepositoryAsync()
         {
-            var repo = new GitRepository
-            {
-                Priority = GitRepositories.Count + 1,
-                InstallRequirements = true
-            };
+            var editor = GitRepositoryEditorViewModel.ForNew(GitRepositories.Count + 1);
 
+            var accepted = true;
+            if (RepositoryEditorAsync is not null)
+            {
+                accepted = await RepositoryEditorAsync(editor, true);
+            }
+
+            if (!accepted)
+            {
+                return;
+            }
+
+            var repo = editor.ToModel();
             var vm = new GitRepositoryItemViewModel(repo, MarkDirty);
-            GitRepositories.Add(vm);
+
             _configuration.GitRepositories.Add(repo);
+            GitRepositories.Add(vm);
             UpdateRepositoryPriorities();
             SelectedRepository = vm;
             MarkDirty();
@@ -463,6 +476,62 @@ namespace DiffusionNexus.Installers.ViewModels
             GitRepositories.Move(index, index + 1);
             _configuration.GitRepositories.Remove(SelectedRepository.Model);
             _configuration.GitRepositories.Insert(index + 1, SelectedRepository.Model);
+            UpdateRepositoryPriorities();
+            MarkDirty();
+        }
+
+        [RelayCommand]
+        private async Task EditRepositoryAsync(GitRepositoryItemViewModel? repository)
+        {
+            if (repository is null)
+            {
+                return;
+            }
+
+            SelectedRepository = repository;
+            EditRepositoryRequested?.Invoke(this, repository);
+
+            var editor = GitRepositoryEditorViewModel.FromExisting(repository);
+
+            var accepted = true;
+            if (RepositoryEditorAsync is not null)
+            {
+                accepted = await RepositoryEditorAsync(editor, false);
+            }
+
+            if (!accepted)
+            {
+                return;
+            }
+
+            editor.ApplyTo(repository);
+        }
+
+        [RelayCommand]
+        private void DeleteRepository(GitRepositoryItemViewModel? repository)
+        {
+            if (repository is null)
+            {
+                return;
+            }
+
+            var index = GitRepositories.IndexOf(repository);
+            _configuration.GitRepositories.Remove(repository.Model);
+            GitRepositories.Remove(repository);
+
+            if (SelectedRepository == repository)
+            {
+                if (GitRepositories.Count == 0)
+                {
+                    SelectedRepository = null;
+                }
+                else
+                {
+                    var nextIndex = Math.Clamp(index, 0, GitRepositories.Count - 1);
+                    SelectedRepository = GitRepositories[nextIndex];
+                }
+            }
+
             UpdateRepositoryPriorities();
             MarkDirty();
         }
