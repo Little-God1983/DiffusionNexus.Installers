@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:vm="clr-namespace:DiffusionNexus.Installers.ViewModels"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        x:Class="DiffusionNexus.Installers.Views.GitRepositoryEditorWindow"
+        Width="480"
+        Height="260"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        x:CompileBindings="False"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:GitRepositoryEditorViewModel}">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12" Margin="20">
+        <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" />
+
+        <StackPanel Grid.Row="1" Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Priority" Width="120" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Priority}" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Name" Width="120" VerticalAlignment="Center" />
+                <TextBox Width="260"
+                         Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Repository URL" Width="120" VerticalAlignment="Center" />
+                <TextBox Width="260"
+                         TextWrapping="Wrap"
+                         Text="{Binding Url, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <CheckBox Content="Install requirements"
+                      IsChecked="{Binding InstallRequirements, Mode=TwoWay}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+            <Button Width="100" Content="Cancel" Click="OnCancelClick" />
+            <Button Width="120"
+                    Content="Save"
+                    IsDefault="True"
+                    IsEnabled="{Binding CanSave}"
+                    Click="OnSaveClick" />
+        </StackPanel>
+    </Grid>
+</Window>
