@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -425,10 +426,8 @@ namespace DiffusionNexus.Installers.ViewModels
             repository.Priority = GitRepositories.Count + 1;
 
             _configuration.GitRepositories.Add(repository);
-            var vm = new GitRepositoryItemViewModel(repository, MarkDirty);
-            GitRepositories.Add(vm);
+            ReloadGitRepositories(repository.Id);
             UpdateRepositoryPriorities();
-            SelectedRepository = vm;
             MarkDirty();
         }
 
@@ -699,14 +698,8 @@ namespace DiffusionNexus.Installers.ViewModels
 
         private void ReloadCollectionsFromConfiguration()
         {
-            GitRepositories.Clear();
+            ReloadGitRepositories();
             ModelDownloads.Clear();
-
-            foreach (var repo in _configuration.GitRepositories.OrderBy(r => r.Priority))
-            {
-                var vm = new GitRepositoryItemViewModel(repo, MarkDirty);
-                GitRepositories.Add(vm);
-            }
 
             foreach (var model in _configuration.ModelDownloads)
             {
@@ -714,6 +707,35 @@ namespace DiffusionNexus.Installers.ViewModels
             }
 
             UpdateRepositoryPriorities();
+        }
+
+        private void ReloadGitRepositories(Guid? preferredSelectionId = null)
+        {
+            var desiredSelection = preferredSelectionId ?? SelectedRepository?.Model.Id;
+
+            SelectedRepository = null;
+            GitRepositories.Clear();
+
+            if (_configuration.GitRepositories is null)
+            {
+                _configuration.GitRepositories = new List<GitRepository>();
+            }
+
+            foreach (var repository in _configuration.GitRepositories.OrderBy(repo => repo.Priority))
+            {
+                var viewModel = new GitRepositoryItemViewModel(repository, MarkDirty);
+                GitRepositories.Add(viewModel);
+
+                if (desiredSelection.HasValue && repository.Id == desiredSelection.Value)
+                {
+                    SelectedRepository = viewModel;
+                }
+            }
+
+            if (SelectedRepository is null && GitRepositories.Count > 0)
+            {
+                SelectedRepository = GitRepositories[0];
+            }
         }
 
         private void UpdateCompatibilityHint()
