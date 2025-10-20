@@ -1,12 +1,14 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DiffusionNexus.Installers.ViewModels"
         x:Class="DiffusionNexus.Installers.Views.GitRepositoryEditorWindow"
+        x:DataType="vm:MainWindowViewModel"
         Width="420"
         MaxWidth="420"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
-    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
         <StackPanel Grid.Row="0" Spacing="8">
             <StackPanel Spacing="4">
                 <TextBlock Text="Display Name" />
@@ -25,7 +27,30 @@
                    Foreground="Red"
                    FontSize="12" />
 
-        <StackPanel Grid.Row="2"
+        <StackPanel Grid.Row="2" Spacing="4">
+            <TextBlock Text="Existing repositories"
+                       FontSize="12"
+                       FontWeight="SemiBold" />
+            <Border BorderThickness="1"
+                    CornerRadius="4"
+                    BorderBrush="{DynamicResource ThemeBorderMidBrush}"
+                    Padding="8">
+                <ScrollViewer MaxHeight="200"
+                              VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding GitRepositories}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GitRepositoryItemViewModel">
+                                <TextBlock Text="{Binding DisplayLabel}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,4" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Spacing="8">

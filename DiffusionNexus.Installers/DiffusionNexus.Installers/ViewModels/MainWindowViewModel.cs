@@ -756,15 +756,21 @@ namespace DiffusionNexus.Installers.ViewModels
         [ObservableProperty]
         private int _priority;
 
+        public string DisplayLabel => string.IsNullOrWhiteSpace(Name)
+            ? Url
+            : $"{Name} ({Url})";
+
         partial void OnNameChanged(string value)
         {
             Model.Name = value;
+            OnPropertyChanged(nameof(DisplayLabel));
             _onChanged();
         }
 
         partial void OnUrlChanged(string value)
         {
             Model.Url = value;
+            OnPropertyChanged(nameof(DisplayLabel));
             _onChanged();
         }
 
