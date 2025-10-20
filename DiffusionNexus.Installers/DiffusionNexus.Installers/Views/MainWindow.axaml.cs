@@ -33,10 +33,18 @@ namespace DiffusionNexus.Installers.Views
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this, vm));
                 vm.EditRepositoryRequested += OnEditRepositoryRequested;
+                if (_gitRepositoriesGrid is not null)
+                {
+                    _gitRepositoriesGrid.ItemsSource = vm.GitRepositories;
+                }
                 _attachedViewModel = vm;
             }
             else
             {
+                if (_gitRepositoriesGrid is not null)
+                {
+                    _gitRepositoriesGrid.ItemsSource = null;
+                }
                 _attachedViewModel = null;
             }
         }
