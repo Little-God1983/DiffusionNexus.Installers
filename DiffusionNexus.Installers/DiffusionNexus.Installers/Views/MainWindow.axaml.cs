@@ -31,7 +31,7 @@ namespace DiffusionNexus.Installers.Views
             if (DataContext is MainWindowViewModel vm)
             {
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
-                vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
+                vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this, vm));
                 vm.EditRepositoryRequested += OnEditRepositoryRequested;
                 _attachedViewModel = vm;
             }
@@ -154,16 +154,21 @@ namespace DiffusionNexus.Installers.Views
         private sealed class AvaloniaGitRepositoryInteractionService : IGitRepositoryInteractionService
         {
             private readonly Window _window;
+            private readonly MainWindowViewModel _viewModel;
 
-            public AvaloniaGitRepositoryInteractionService(Window window)
+            public AvaloniaGitRepositoryInteractionService(Window window, MainWindowViewModel viewModel)
             {
                 _window = window;
+                _viewModel = viewModel;
             }
 
             public Task<GitRepository?> CreateRepositoryAsync()
             {
                 var draft = new GitRepository();
-                var dialog = new GitRepositoryEditorWindow(draft, isNew: true);
+                var dialog = new GitRepositoryEditorWindow(draft, isNew: true)
+                {
+                    DataContext = _viewModel
+                };
                 return dialog.ShowDialog<GitRepository?>(_window);
             }
 
@@ -178,7 +183,10 @@ namespace DiffusionNexus.Installers.Views
                     Priority = repository.Priority
                 };
 
-                var dialog = new GitRepositoryEditorWindow(draft, isNew: false);
+                var dialog = new GitRepositoryEditorWindow(draft, isNew: false)
+                {
+                    DataContext = _viewModel
+                };
                 var result = await dialog.ShowDialog<GitRepository?>(_window);
                 if (result is null)
                 {

@@ -430,6 +430,7 @@ namespace DiffusionNexus.Installers.ViewModels
             UpdateRepositoryPriorities();
             SelectedRepository = vm;
             MarkDirty();
+            NotifyGitRepositoriesChanged();
         }
 
         [RelayCommand]
@@ -444,6 +445,7 @@ namespace DiffusionNexus.Installers.ViewModels
             GitRepositories.Remove(SelectedRepository);
             UpdateRepositoryPriorities();
             MarkDirty();
+            NotifyGitRepositoriesChanged();
         }
 
         [RelayCommand]
@@ -465,6 +467,7 @@ namespace DiffusionNexus.Installers.ViewModels
             _configuration.GitRepositories.Insert(index - 1, SelectedRepository.Model);
             UpdateRepositoryPriorities();
             MarkDirty();
+            NotifyGitRepositoriesChanged();
         }
 
         [RelayCommand]
@@ -486,6 +489,7 @@ namespace DiffusionNexus.Installers.ViewModels
             _configuration.GitRepositories.Insert(index + 1, SelectedRepository.Model);
             UpdateRepositoryPriorities();
             MarkDirty();
+            NotifyGitRepositoriesChanged();
         }
 
         [RelayCommand]
@@ -527,6 +531,8 @@ namespace DiffusionNexus.Installers.ViewModels
             var index = GitRepositories.IndexOf(repository);
             _configuration.GitRepositories.Remove(repository.Model);
             GitRepositories.Remove(repository);
+
+            NotifyGitRepositoriesChanged();
 
             if (SelectedRepository == repository)
             {
@@ -714,6 +720,12 @@ namespace DiffusionNexus.Installers.ViewModels
             }
 
             UpdateRepositoryPriorities();
+            NotifyGitRepositoriesChanged();
+        }
+
+        private void NotifyGitRepositoriesChanged()
+        {
+            OnPropertyChanged(nameof(GitRepositories));
         }
 
         private void UpdateCompatibilityHint()
@@ -756,15 +768,21 @@ namespace DiffusionNexus.Installers.ViewModels
         [ObservableProperty]
         private int _priority;
 
+        public string DisplayLabel => string.IsNullOrWhiteSpace(Name)
+            ? Url
+            : $"{Name} ({Url})";
+
         partial void OnNameChanged(string value)
         {
             Model.Name = value;
+            OnPropertyChanged(nameof(DisplayLabel));
             _onChanged();
         }
 
         partial void OnUrlChanged(string value)
         {
             Model.Url = value;
+            OnPropertyChanged(nameof(DisplayLabel));
             _onChanged();
         }
 
