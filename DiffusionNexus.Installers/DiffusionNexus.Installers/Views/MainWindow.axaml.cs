@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using DiffusionNexus.Core.Models;
 using DiffusionNexus.Installers.ViewModels;
@@ -22,6 +23,26 @@ namespace DiffusionNexus.Installers.Views
             if (DataContext is MainWindowViewModel vm)
             {
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
+            }
+        }
+
+        private void OnMoveUpClick(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button button &&
+                button.Tag is GitRepositoryItemViewModel repository &&
+                DataContext is MainWindowViewModel vm)
+            {
+                vm.MoveRepositoryUpWithParameter(repository);
+            }
+        }
+
+        private void OnMoveDownClick(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button button &&
+                button.Tag is GitRepositoryItemViewModel repository &&
+                DataContext is MainWindowViewModel vm)
+            {
+                vm.MoveRepositoryDownWithParameter(repository);
             }
         }
 
