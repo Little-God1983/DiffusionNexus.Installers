@@ -488,6 +488,49 @@ namespace DiffusionNexus.Installers.ViewModels
             MarkDirty();
         }
 
+        // Add new parameterized commands
+        public void MoveRepositoryUpWithParameter(GitRepositoryItemViewModel repository)
+        {
+            if (repository is null)
+            {
+                return;
+            }
+
+            var index = GitRepositories.IndexOf(repository);
+            if (index <= 0)
+            {
+                return;
+            }
+
+            GitRepositories.Move(index, index - 1);
+            _configuration.GitRepositories.Remove(repository.Model);
+            _configuration.GitRepositories.Insert(index - 1, repository.Model);
+            UpdateRepositoryPriorities();
+            SelectedRepository = repository;
+            MarkDirty();
+        }
+
+        public void MoveRepositoryDownWithParameter(GitRepositoryItemViewModel repository)
+        {
+            if (repository is null)
+            {
+                return;
+            }
+
+            var index = GitRepositories.IndexOf(repository);
+            if (index < 0 || index >= GitRepositories.Count - 1)
+            {
+                return;
+            }
+
+            GitRepositories.Move(index, index + 1);
+            _configuration.GitRepositories.Remove(repository.Model);
+            _configuration.GitRepositories.Insert(index + 1, repository.Model);
+            UpdateRepositoryPriorities();
+            SelectedRepository = repository;
+            MarkDirty();
+        }
+
         [RelayCommand]
         private async Task EditRepositoryAsync(GitRepositoryItemViewModel? repository)
         {
