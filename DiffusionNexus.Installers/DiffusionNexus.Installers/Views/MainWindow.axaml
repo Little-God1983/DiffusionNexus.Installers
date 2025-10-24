@@ -8,6 +8,45 @@
         Height="700">
     
     <DockPanel>
+                <Menu DockPanel.Dock="Top">
+        <!-- Title -->
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" Command="{Binding NewConfigurationCommand}" />
+                <MenuItem Header="_Open" Command="{Binding OpenCommand}" />
+                <MenuItem Header="_Save" Command="{Binding SaveCommand}" />
+                <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
+            </MenuItem>
+        </Menu>
+          <Border Padding="12"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Python Environment"
+                                       FontSize="16"
+                                       FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                <TextBlock Text="Python Version" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding PythonVersions}"
+                                          SelectedItem="{Binding SelectedPythonVersion}" />
+                                <TextBlock Grid.Row="1" Text="Interpreter Override" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding InterpreterPathOverride, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Row="1" Grid.Column="2" Content="Browse"
+                                        Command="{Binding BrowseInterpreterCommand}" />
+                                <CheckBox Grid.Row="2"
+                                          Content="Create virtual environment"
+                                          IsChecked="{Binding CreateVirtualEnvironment}" />
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Watermark="venv name"
+                                         IsEnabled="{Binding CreateVirtualEnvironment}"
+                                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
         <!-- Title -->
       <TextBlock DockPanel.Dock="Top" 
            Text="Git Repositories" 
