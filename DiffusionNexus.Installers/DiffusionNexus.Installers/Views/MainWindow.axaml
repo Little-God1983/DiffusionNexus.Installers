@@ -1,68 +1,146 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Avalonia.Controls;
-using Avalonia.Platform.Storage;
-using DiffusionNexus.Core.Models;
-using DiffusionNexus.Installers.ViewModels;
-
-namespace DiffusionNexus.Installers.Views
-{
-    public partial class MainWindow : Window
-    {
-        public MainWindow()
-        {
-            InitializeComponent();
-            DataContextChanged += OnDataContextChanged;
-        }
-
-        private void OnDataContextChanged(object? sender, EventArgs e)
-        {
-            if (DataContext is MainWindowViewModel vm)
-            {
-                vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
-            }
-        }
-
-        private sealed class AvaloniaGitRepositoryInteractionService : IGitRepositoryInteractionService
-        {
-            private readonly Window _window;
-
-            public AvaloniaGitRepositoryInteractionService(Window window)
-            {
-                _window = window;
-            }
-
-            public Task<GitRepository?> CreateRepositoryAsync()
-            {
-                var draft = new GitRepository();
-                var dialog = new GitRepositoryEditorWindow(draft, isNew: true);
-                return dialog.ShowDialog<GitRepository?>(_window);
-            }
-
-            public async Task<GitRepository?> EditRepositoryAsync(GitRepository repository)
-            {
-                var draft = new GitRepository
-                {
-                    Id = repository.Id,
-                    Name = repository.Name,
-                    Url = repository.Url,
-                    InstallRequirements = repository.InstallRequirements,
-                    Priority = repository.Priority
-                };
-
-                var dialog = new GitRepositoryEditorWindow(draft, isNew: false);
-                var result = await dialog.ShowDialog<GitRepository?>(_window);
-                if (result is null)
-                {
-                    return null;
-                }
-
-                result.Id = repository.Id;
-                result.Priority = repository.Priority;
-                return result;
-            }
-        }
-    }
-}
+<Window xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DiffusionNexus.Installers.ViewModels"
+  x:Class="DiffusionNexus.Installers.Views.MainWindow"
+        Title="Git Repositories Manager"
+        x:DataType="vm:MainWindowViewModel"
+     Width="1000"
+        Height="700">
+    
+    <DockPanel>
+        <!-- Title -->
+      <TextBlock DockPanel.Dock="Top" 
+           Text="Git Repositories" 
+FontSize="24" 
+          FontWeight="Bold"
+  Margin="20"
+ HorizontalAlignment="Center"/>
+ 
+        <!-- Add button -->
+        <Button DockPanel.Dock="Top"
+      Content="➕ Add Repository"
+    Command="{Binding AddRepositoryCommand}"
+   HorizontalAlignment="Center"
+       Margin="10"
+           Padding="30,12"
+           FontSize="16"
+       FontWeight="Bold"/>
+   
+        <!-- Item count -->
+<TextBlock DockPanel.Dock="Top"
+              Text="{Binding GitRepositories.Count, StringFormat='Total Repositories: {0}'}"
+   HorizontalAlignment="Center"
+    FontSize="16"
+             FontWeight="Bold"
+                 Foreground="Green"
+       Margin="10"/>
+   
+        <!-- ListBox with repositories -->
+        <Border BorderBrush="DarkGray" 
+             BorderThickness="2" 
+                Margin="20"
+        CornerRadius="8">
+          <ListBox ItemsSource="{Binding GitRepositories}"
+SelectedItem="{Binding SelectedRepository}"
+     Background="White"
+     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+     <ListBox.ItemTemplate>
+     <DataTemplate>
+     <Border BorderBrush="Gray" 
+               BorderThickness="1" 
+              Padding="15" 
+        Margin="8"
+           Background="WhiteSmoke"
+  CornerRadius="6">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+         <!-- Priority Badge -->
+  <Border Grid.Column="0"
+               Background="DarkBlue"
+      CornerRadius="20"
+         Width="40"
+       Height="40"
+        Margin="0,0,15,0"
+     VerticalAlignment="Top">
+     <TextBlock Text="{Binding Priority}" 
+        Foreground="White"
+            FontSize="18"
+            FontWeight="Bold"
+          HorizontalAlignment="Center"
+       VerticalAlignment="Center"/>
+     </Border>
+          
+               <!-- Repository Info -->
+      <StackPanel Grid.Column="1">
+         <TextBlock Text="{Binding Name}" 
+          FontSize="18"
+            FontWeight="Bold"
+         Foreground="DarkBlue"
+         TextWrapping="Wrap"/>
+             <TextBlock Text="{Binding Url}" 
+     FontSize="14"
+                Foreground="Blue"
+       Margin="0,5,0,0"
+    TextWrapping="Wrap"/>
+  <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <TextBlock Text="Install Requirements: " 
+        FontSize="12"
+   Foreground="Gray"/>
+   <TextBlock Text="{Binding InstallRequirements}" 
+           FontSize="12"
+     FontWeight="Bold"
+             Foreground="DarkGreen"/>
+         </StackPanel>
+      </StackPanel>
+ 
+                   <!-- Action Buttons -->
+        <StackPanel Grid.Column="2" 
+  Spacing="8"
+    Margin="15,0,0,0">
+        <!-- Move Up -->
+       <Button Content="▲ Up"
+          Click="OnMoveUpClick"
+   Tag="{Binding}"
+        Width="100"
+           Padding="8,6"
+     FontSize="14"
+       HorizontalContentAlignment="Center"
+        Background="#E3F2FD"/>
+     
+                <!-- Move Down -->
+            <Button Content="▼ Down"
+ Click="OnMoveDownClick"
+         Tag="{Binding}"
+      Width="100"
+     Padding="8,6"
+     FontSize="14"
+      HorizontalContentAlignment="Center"
+          Background="#E3F2FD"/>
+     
+       <!-- Edit -->
+     <Button Content="✏️ Edit"
+         Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).EditRepositoryCommand}"
+           CommandParameter="{Binding}"
+             Width="100"
+         Padding="8,6"
+     FontSize="14"
+             HorizontalContentAlignment="Center"
+                  Background="LightBlue"/>
+           
+           <!-- Delete -->
+   <Button Content="🗑️ Delete"
+              Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).DeleteRepositoryCommand}"
+            CommandParameter="{Binding}"
+    Width="100"
+     Padding="8,6"
+  FontSize="14"
+       HorizontalContentAlignment="Center"
+   Background="LightCoral"/>
+           </StackPanel>
+    </Grid>
+              </Border>
+            </DataTemplate>
+     </ListBox.ItemTemplate>
+            </ListBox>
+     </Border>
+    </DockPanel>
+</Window>
