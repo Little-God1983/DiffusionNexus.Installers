@@ -17,40 +17,127 @@
                 <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
             </MenuItem>
         </Menu>
-          <Border Padding="12"
-                            BorderThickness="1"
-                            CornerRadius="6"
-                            BorderBrush="{DynamicResource ThemeBorderMidBrush}">
-                        <StackPanel Spacing="12">
-                            <TextBlock Text="Python Environment"
-                                       FontSize="16"
-                                       FontWeight="SemiBold" />
-                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                                <TextBlock Text="Python Version" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding PythonVersions}"
-                                          SelectedItem="{Binding SelectedPythonVersion}" />
-                                <TextBlock Grid.Row="1" Text="Interpreter Override" VerticalAlignment="Center" />
-                                <TextBox Grid.Row="1"
-                                         Grid.Column="1"
-                                         Text="{Binding InterpreterPathOverride, UpdateSourceTrigger=PropertyChanged}" />
-                                <Button Grid.Row="1" Grid.Column="2" Content="Browse"
-                                        Command="{Binding BrowseInterpreterCommand}" />
-                                <CheckBox Grid.Row="2"
-                                          Content="Create virtual environment"
-                                          IsChecked="{Binding CreateVirtualEnvironment}" />
-                                <TextBox Grid.Row="2"
-                                         Grid.Column="1"
-                                         Watermark="venv name"
-                                         IsEnabled="{Binding CreateVirtualEnvironment}"
-                                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+        <StackPanel DockPanel.Dock="Top" Margin="12" Spacing="12">
+          <Border Padding="16"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Background="{DynamicResource ThemeControlLowBrush}"
+                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="Repository"
+                         FontSize="16"
+                         FontWeight="SemiBold" />
+              <Grid ColumnDefinitions="180,*,Auto"
+                    RowDefinitions="Auto,Auto"
+                    ColumnSpacing="12"
+                    RowSpacing="8">
+                <TextBlock Text="Repository Type"
+                           VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding RepositoryTypes}"
+                          SelectedItem="{Binding SelectedRepositoryType}" />
+
+                <TextBlock Grid.Row="1"
+                           Text="Repository URL"
+                           VerticalAlignment="Center" />
+                <TextBox Grid.Row="1"
+                         Grid.Column="1"
+                         Grid.ColumnSpan="2"
+                         Text="{Binding RepositoryUrl, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Padding="16"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Background="{DynamicResource ThemeControlLowBrush}"
+                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="Python Environment"
+                         FontSize="16"
+                         FontWeight="SemiBold" />
+              <Grid ColumnDefinitions="180,*,Auto"
+                    RowDefinitions="Auto,Auto,Auto"
+                    ColumnSpacing="12"
+                    RowSpacing="8">
+                <TextBlock Text="Python Version"
+                           VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding PythonVersions}"
+                          SelectedItem="{Binding SelectedPythonVersion}" />
+
+                <TextBlock Grid.Row="1"
+                           Text="Interpreter Override"
+                           VerticalAlignment="Center" />
+                <TextBox Grid.Row="1"
+                         Grid.Column="1"
+                         Text="{Binding InterpreterPathOverride, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        Content="Browse"
+                        Command="{Binding BrowseInterpreterCommand}" />
+
+                <CheckBox Grid.Row="2"
+                          Content="Create virtual environment"
+                          IsChecked="{Binding CreateVirtualEnvironment}"
+                          VerticalAlignment="Center" />
+                <TextBox Grid.Row="2"
+                         Grid.Column="1"
+                         Watermark="venv name"
+                         IsEnabled="{Binding CreateVirtualEnvironment}"
+                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Padding="16"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Background="{DynamicResource ThemeControlLowBrush}"
+                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="Paths"
+                         FontSize="16"
+                         FontWeight="SemiBold" />
+              <Grid ColumnDefinitions="180,*,Auto"
+                    RowDefinitions="Auto,Auto,Auto"
+                    ColumnSpacing="12"
+                    RowSpacing="8">
+                <TextBlock Text="Workspace Root"
+                           VerticalAlignment="Center" />
+                <TextBox Grid.Column="1"
+                         Text="{Binding RootDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2"
+                        Content="Browse"
+                        Command="{Binding BrowseRootDirectoryCommand}" />
+
+                <TextBlock Grid.Row="1"
+                           Text="Default Model Directory"
+                           VerticalAlignment="Center" />
+                <TextBox Grid.Row="1"
+                         Grid.Column="1"
+                         Text="{Binding DefaultModelDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        Content="Browse"
+                        Command="{Binding BrowseModelDirectoryCommand}" />
+
+                <TextBlock Grid.Row="2"
+                           Text="Log File"
+                           VerticalAlignment="Center" />
+                <TextBox Grid.Row="2"
+                         Grid.Column="1"
+                         Grid.ColumnSpan="2"
+                         Text="{Binding LogFileName, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+            </StackPanel>
+          </Border>
+        </StackPanel>
         <!-- Title -->
-      <TextBlock DockPanel.Dock="Top" 
-           Text="Git Repositories" 
-FontSize="24" 
+      <TextBlock DockPanel.Dock="Top"
+           Text="Git Repositories"
+FontSize="24"
           FontWeight="Bold"
   Margin="20"
  HorizontalAlignment="Center"/>
