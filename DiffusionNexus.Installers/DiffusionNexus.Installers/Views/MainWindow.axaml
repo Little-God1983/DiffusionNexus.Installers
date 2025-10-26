@@ -48,7 +48,7 @@
             </StackPanel>
           </Border>
 
-          <Border Padding="16"
+             <Border Padding="16"
                   BorderThickness="1"
                   CornerRadius="6"
                   Background="{DynamicResource ThemeControlLowBrush}"
@@ -85,6 +85,33 @@
                 <TextBox Grid.Row="2"
                          Grid.Column="1"
                          Watermark="venv name"
+                         IsEnabled="{Binding CreateVirtualEnvironment}"
+                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+
+          <Border Padding="16"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Background="{DynamicResource ThemeControlLowBrush}"
+                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+            <StackPanel Spacing="12">
+              <TextBlock Text="VRAM"
+                         FontSize="16"
+                         FontWeight="SemiBold" />
+              <Grid ColumnDefinitions="180,*,Auto"
+                    RowDefinitions="Auto,Auto,Auto"
+                    ColumnSpacing="12"
+                    RowSpacing="8">
+                <CheckBox Grid.Row="2"
+                          Content="User VRAM Settings"
+                          IsChecked="{Binding CreateVirtualEnvironment}"
+                          VerticalAlignment="Center" />
+                <TextBox Grid.Row="2"
+                         Grid.Column="1"
+                         Watermark="vram mapppings comma separated"
                          IsEnabled="{Binding CreateVirtualEnvironment}"
                          Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
               </Grid>
