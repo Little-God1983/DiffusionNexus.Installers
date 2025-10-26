@@ -1,299 +1,298 @@
 <Window xmlns="https://github.com/avaloniaui"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DiffusionNexus.Installers.ViewModels"
-  x:Class="DiffusionNexus.Installers.Views.MainWindow"
-        Title="Git Repositories Manager"
-        x:DataType="vm:MainWindowViewModel"
-     Width="1000"
+        x:Class="DiffusionNexus.Installers.Views.MainWindow"
+      Title="Git Repositories Manager"
+   x:DataType="vm:MainWindowViewModel"
+      Width="1000"
         Height="700">
     
     <DockPanel>
-                <Menu DockPanel.Dock="Top">
-        <!-- Title -->
+        <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New" Command="{Binding NewConfigurationCommand}" />
+           <MenuItem Header="_New" Command="{Binding NewConfigurationCommand}" />
                 <MenuItem Header="_Open" Command="{Binding OpenCommand}" />
-                <MenuItem Header="_Save" Command="{Binding SaveCommand}" />
-                <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
-            </MenuItem>
-        </Menu>
-        <StackPanel DockPanel.Dock="Top" Margin="12" Spacing="12">
+    <MenuItem Header="_Save" Command="{Binding SaveCommand}" />
+    <MenuItem Header="Save _As" Command="{Binding SaveAsCommand}" />
+  </MenuItem>
+   </Menu>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+   <StackPanel>
+       <StackPanel Margin="12" Spacing="12">
+    <!-- Repository Section -->
           <Border Padding="16"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Background="{DynamicResource ThemeControlLowBrush}"
-                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
-            <StackPanel Spacing="12">
-              <TextBlock Text="Repository"
-                         FontSize="16"
-                         FontWeight="SemiBold" />
-              <Grid ColumnDefinitions="180,*,Auto"
-                    RowDefinitions="Auto,Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="8">
-                <TextBlock Text="Repository Type"
-                           VerticalAlignment="Center" />
-                <ComboBox Grid.Column="1"
-                          ItemsSource="{Binding RepositoryTypes}"
-                          SelectedItem="{Binding SelectedRepositoryType}" />
+             BorderThickness="1"
+         CornerRadius="6"
+         Background="{DynamicResource ThemeControlLowBrush}"
+    BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+         <!-- ... Repository content ... -->
+   <StackPanel Spacing="12">
+ <TextBlock Text="Repository"
+                 FontSize="16"
+   FontWeight="SemiBold" />
+ <Grid ColumnDefinitions="180,*,Auto"
+           RowDefinitions="Auto,Auto"
+            ColumnSpacing="12"
+   RowSpacing="8">
+   <TextBlock Text="Repository Type"
+               VerticalAlignment="Center" />
+               <ComboBox Grid.Column="1"
+        ItemsSource="{Binding RepositoryTypes}"
+            SelectedItem="{Binding SelectedRepositoryType}" />
 
-                <TextBlock Grid.Row="1"
-                           Text="Repository URL"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         Grid.ColumnSpan="2"
-                         Text="{Binding RepositoryUrl, UpdateSourceTrigger=PropertyChanged}" />
-              </Grid>
-            </StackPanel>
-          </Border>
+                 <TextBlock Grid.Row="1"
+       Text="Repository URL"
+        VerticalAlignment="Center" />
+           <TextBox Grid.Row="1"
+             Grid.Column="1"
+      Grid.ColumnSpan="2"
+               Text="{Binding RepositoryUrl, UpdateSourceTrigger=PropertyChanged}" />
+       </Grid>
+     </StackPanel>
+   </Border>
 
-             <Border Padding="16"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Background="{DynamicResource ThemeControlLowBrush}"
-                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
-            <StackPanel Spacing="12">
-              <TextBlock Text="Python Environment"
-                         FontSize="16"
-                         FontWeight="SemiBold" />
-              <Grid ColumnDefinitions="180,*,Auto"
-                    RowDefinitions="Auto,Auto,Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="8">
-                <TextBlock Text="Python Version"
-                           VerticalAlignment="Center" />
-                <ComboBox Grid.Column="1"
-                          ItemsSource="{Binding PythonVersions}"
-                          SelectedItem="{Binding SelectedPythonVersion}" />
+          <!-- Python Environment Section -->
+    <Border Padding="16"
+   BorderThickness="1"
+    CornerRadius="6"
+        Background="{DynamicResource ThemeControlLowBrush}"
+    BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+           <StackPanel Spacing="12">
+             <TextBlock Text="Python Environment"
+         FontSize="16"
+      FontWeight="SemiBold" />
+               <Grid ColumnDefinitions="180,*,Auto"
+          RowDefinitions="Auto,Auto,Auto"
+      ColumnSpacing="12"
+        RowSpacing="8">
+      <TextBlock Text="Python Version"
+        VerticalAlignment="Center" />
+ <ComboBox Grid.Column="1"
+        ItemsSource="{Binding PythonVersions}"
+     SelectedItem="{Binding SelectedPythonVersion}" />
 
-                <TextBlock Grid.Row="1"
-                           Text="Interpreter Override"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         Text="{Binding InterpreterPathOverride, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Row="1"
-                        Grid.Column="2"
-                        Content="Browse"
-                        Command="{Binding BrowseInterpreterCommand}" />
+            <TextBlock Grid.Row="1"
+   Text="Interpreter Override"
+     VerticalAlignment="Center" />
+     <TextBox Grid.Row="1"
+                 Grid.Column="1"
+              Text="{Binding InterpreterPathOverride, UpdateSourceTrigger=PropertyChanged}" />
+  <Button Grid.Row="1"
+           Grid.Column="2"
+   Content="Browse"
+             Command="{Binding BrowseInterpreterCommand}" />
 
-                <CheckBox Grid.Row="2"
-                          Content="Create virtual environment"
-                          IsChecked="{Binding CreateVirtualEnvironment}"
-                          VerticalAlignment="Center" />
-                <TextBox Grid.Row="2"
-                         Grid.Column="1"
-                         Watermark="venv name"
-                         IsEnabled="{Binding CreateVirtualEnvironment}"
-                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
-              </Grid>
-            </StackPanel>
-          </Border>
-
-
-          <Border Padding="16"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Background="{DynamicResource ThemeControlLowBrush}"
-                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
-            <StackPanel Spacing="12">
-              <TextBlock Text="VRAM"
-                         FontSize="16"
-                         FontWeight="SemiBold" />
-              <Grid ColumnDefinitions="180,*,Auto"
-                    RowDefinitions="Auto,Auto,Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="8">
-                <CheckBox Grid.Row="2"
-                          Content="User VRAM Settings"
-                          IsChecked="{Binding CreateVirtualEnvironment}"
-                          VerticalAlignment="Center" />
-                <TextBox Grid.Row="2"
-                         Grid.Column="1"
-                         Watermark="vram mapppings comma separated"
-                         IsEnabled="{Binding CreateVirtualEnvironment}"
-                         Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
-              </Grid>
-            </StackPanel>
-          </Border>
-
-          <Border Padding="16"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Background="{DynamicResource ThemeControlLowBrush}"
-                  BorderBrush="{DynamicResource ThemeBorderMidBrush}">
-            <StackPanel Spacing="12">
-              <TextBlock Text="Paths"
-                         FontSize="16"
-                         FontWeight="SemiBold" />
-              <Grid ColumnDefinitions="180,*,Auto"
-                    RowDefinitions="Auto,Auto,Auto"
-                    ColumnSpacing="12"
-                    RowSpacing="8">
-                <TextBlock Text="Workspace Root"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Column="1"
-                         Text="{Binding RootDirectory, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="2"
-                        Content="Browse"
-                        Command="{Binding BrowseRootDirectoryCommand}" />
-
-                <TextBlock Grid.Row="1"
-                           Text="Default Model Directory"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         Text="{Binding DefaultModelDirectory, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Row="1"
-                        Grid.Column="2"
-                        Content="Browse"
-                        Command="{Binding BrowseModelDirectoryCommand}" />
-
-                <TextBlock Grid.Row="2"
-                           Text="Log File"
-                           VerticalAlignment="Center" />
-                <TextBox Grid.Row="2"
-                         Grid.Column="1"
-                         Grid.ColumnSpan="2"
-                         Text="{Binding LogFileName, UpdateSourceTrigger=PropertyChanged}" />
-              </Grid>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-        <!-- Title -->
-      <TextBlock DockPanel.Dock="Top"
-           Text="Git Repositories"
-FontSize="24"
-          FontWeight="Bold"
-  Margin="20"
- HorizontalAlignment="Center"/>
- 
-        <!-- Add button -->
-        <Button DockPanel.Dock="Top"
-      Content="➕ Add Repository"
-    Command="{Binding AddRepositoryCommand}"
-   HorizontalAlignment="Center"
-       Margin="10"
-           Padding="30,12"
-           FontSize="16"
-       FontWeight="Bold"/>
-   
-        <!-- Item count -->
-<TextBlock DockPanel.Dock="Top"
-              Text="{Binding GitRepositories.Count, StringFormat='Total Repositories: {0}'}"
-   HorizontalAlignment="Center"
-    FontSize="16"
-             FontWeight="Bold"
-                 Foreground="Green"
-       Margin="10"/>
-   
-        <!-- ListBox with repositories -->
-        <Border BorderBrush="DarkGray" 
-             BorderThickness="2" 
-                Margin="20"
-        CornerRadius="8">
-          <ListBox ItemsSource="{Binding GitRepositories}"
-SelectedItem="{Binding SelectedRepository}"
-     Background="White"
-     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-     <ListBox.ItemTemplate>
-     <DataTemplate>
-     <Border BorderBrush="Gray" 
-               BorderThickness="1" 
-              Padding="15" 
-        Margin="8"
-           Background="WhiteSmoke"
-  CornerRadius="6">
-      <Grid ColumnDefinitions="Auto,*,Auto">
-         <!-- Priority Badge -->
-  <Border Grid.Column="0"
-               Background="DarkBlue"
-      CornerRadius="20"
-         Width="40"
-       Height="40"
-        Margin="0,0,15,0"
-     VerticalAlignment="Top">
-     <TextBlock Text="{Binding Priority}" 
-        Foreground="White"
-            FontSize="18"
-            FontWeight="Bold"
-          HorizontalAlignment="Center"
-       VerticalAlignment="Center"/>
+         <CheckBox Grid.Row="2"
+  Content="Create virtual environment"
+      IsChecked="{Binding CreateVirtualEnvironment}"
+      VerticalAlignment="Center" />
+           <TextBox Grid.Row="2"
+          Grid.Column="1"
+       Watermark="venv name"
+           IsEnabled="{Binding CreateVirtualEnvironment}"
+       Text="{Binding VirtualEnvironmentName, UpdateSourceTrigger=PropertyChanged}" />
+  </Grid>
+          </StackPanel>
      </Border>
-          
-               <!-- Repository Info -->
-      <StackPanel Grid.Column="1">
-         <TextBlock Text="{Binding Name}" 
-          FontSize="18"
-            FontWeight="Bold"
-         Foreground="DarkBlue"
-         TextWrapping="Wrap"/>
-             <TextBlock Text="{Binding Url}" 
-     FontSize="14"
-                Foreground="Blue"
-       Margin="0,5,0,0"
-    TextWrapping="Wrap"/>
-  <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-            <TextBlock Text="Install Requirements: " 
-        FontSize="12"
-   Foreground="Gray"/>
-   <TextBlock Text="{Binding InstallRequirements}" 
-           FontSize="12"
-     FontWeight="Bold"
-             Foreground="DarkGreen"/>
-         </StackPanel>
-      </StackPanel>
- 
-                   <!-- Action Buttons -->
-        <StackPanel Grid.Column="2" 
-  Spacing="8"
-    Margin="15,0,0,0">
-        <!-- Move Up -->
-       <Button Content="▲ Up"
-          Click="OnMoveUpClick"
-   Tag="{Binding}"
-        Width="100"
-           Padding="8,6"
-     FontSize="14"
-       HorizontalContentAlignment="Center"
-        Background="#E3F2FD"/>
-     
-                <!-- Move Down -->
-            <Button Content="▼ Down"
- Click="OnMoveDownClick"
-         Tag="{Binding}"
-      Width="100"
-     Padding="8,6"
-     FontSize="14"
-      HorizontalContentAlignment="Center"
-          Background="#E3F2FD"/>
-     
-       <!-- Edit -->
-     <Button Content="✏️ Edit"
-         Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).EditRepositoryCommand}"
-           CommandParameter="{Binding}"
-             Width="100"
-         Padding="8,6"
-     FontSize="14"
-             HorizontalContentAlignment="Center"
-                  Background="LightBlue"/>
-           
-           <!-- Delete -->
-   <Button Content="🗑️ Delete"
-              Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).DeleteRepositoryCommand}"
-            CommandParameter="{Binding}"
-    Width="100"
-     Padding="8,6"
-  FontSize="14"
-       HorizontalContentAlignment="Center"
-   Background="LightCoral"/>
-           </StackPanel>
+
+        <!-- VRAM Section -->
+          <Border Padding="16"
+               BorderThickness="1"
+    CornerRadius="6"
+             Background="{DynamicResource ThemeControlLowBrush}"
+                BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+    <StackPanel Spacing="12">
+   <TextBlock Text="VRAM"
+      FontSize="16"
+          FontWeight="SemiBold" />
+      <Grid ColumnDefinitions="180,*,Auto"
+        RowDefinitions="Auto,Auto,Auto"
+   ColumnSpacing="12"
+            RowSpacing="8">
+              <CheckBox Grid.Row="2"
+   Content="User VRAM Settings"
+   IsChecked="{Binding CreateVramSettings}"
+            VerticalAlignment="Center" />
+             <TextBox Grid.Row="2"
+          Grid.Column="1"
+     Watermark="vram mapppings comma separated"
+  IsEnabled="{Binding CreateVramSettings}"
+   Text="{Binding VramProfiles, UpdateSourceTrigger=PropertyChanged}" />
     </Grid>
-              </Border>
-            </DataTemplate>
-     </ListBox.ItemTemplate>
-            </ListBox>
-     </Border>
+             </StackPanel>
+  </Border>
+
+    <!-- Paths Section -->
+                    <Border Padding="16"
+    BorderThickness="1"
+     CornerRadius="6"
+    Background="{DynamicResource ThemeControlLowBrush}"
+          BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+     <StackPanel Spacing="12">
+   <TextBlock Text="Paths"
+FontSize="16"
+                  FontWeight="SemiBold" />
+           <Grid ColumnDefinitions="180,*,Auto"
+    RowDefinitions="Auto,Auto,Auto"
+         ColumnSpacing="12"
+      RowSpacing="8">
+  <TextBlock Text="Workspace Root"
+                  VerticalAlignment="Center" />
+                <TextBox Grid.Column="1"
+              Text="{Binding RootDirectory, UpdateSourceTrigger=PropertyChanged}" />
+   <Button Grid.Column="2"
+ Content="Browse"
+        Command="{Binding BrowseRootDirectoryCommand}" />
+
+            <TextBlock Grid.Row="1"
+              Text="Default Model Directory"
+             VerticalAlignment="Center" />
+    <TextBox Grid.Row="1"
+            Grid.Column="1"
+        Text="{Binding DefaultModelDirectory, UpdateSourceTrigger=PropertyChanged}" />
+   <Button Grid.Row="1"
+  Grid.Column="2"
+             Content="Browse"
+        Command="{Binding BrowseModelDirectoryCommand}" />
+
+   <TextBlock Grid.Row="2"
+         Text="Log File"
+  VerticalAlignment="Center" />
+    <TextBox Grid.Row="2"
+          Grid.Column="1"
+           Grid.ColumnSpan="2"
+         Text="{Binding LogFileName, UpdateSourceTrigger=PropertyChanged}" />
+         </Grid>
+          </StackPanel>
+       </Border>
+             </StackPanel>
+
+                <!-- Git Repositories Section -->
+   <TextBlock Text="Git Repositories"
+          FontSize="24"
+     FontWeight="Bold"
+      Margin="20"
+       HorizontalAlignment="Center"/>
+
+                <Button Content="➕ Add Repository"
+            Command="{Binding AddRepositoryCommand}"
+            HorizontalAlignment="Center"
+          Margin="10"
+             Padding="30,12"
+          FontSize="16"
+         FontWeight="Bold"/>
+
+        <TextBlock Text="{Binding GitRepositories.Count, StringFormat='Total Repositories: {0}'}"
+           HorizontalAlignment="Center"
+        FontSize="16"
+       FontWeight="Bold"
+     Foreground="Green"
+              Margin="10"/>
+
+    <Border BorderBrush="DarkGray" 
+    BorderThickness="2" 
+              Margin="20"
+  CornerRadius="8">
+           <ListBox ItemsSource="{Binding GitRepositories}"
+       SelectedItem="{Binding SelectedRepository}"
+     Background="White"
+         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+    <DataTemplate>
+           <Border BorderBrush="Gray" 
+        BorderThickness="1" 
+           Padding="15" 
+                 Margin="8"
+       Background="WhiteSmoke"
+                CornerRadius="6">
+    <Grid ColumnDefinitions="Auto,*,Auto">
+      <!-- Priority Badge -->
+    <Border Grid.Column="0"
+     Background="DarkBlue"
+       CornerRadius="20"
+      Width="40"
+     Height="40"
+      Margin="0,0,15,0"
+       VerticalAlignment="Top">
+     <TextBlock Text="{Binding Priority}" 
+      Foreground="White"
+    FontSize="18"
+           FontWeight="Bold"
+          HorizontalAlignment="Center"
+         VerticalAlignment="Center"/>
+          </Border>
+
+   <!-- Repository Info -->
+         <StackPanel Grid.Column="1">
+           <TextBlock Text="{Binding Name}" 
+  FontSize="18"
+           FontWeight="Bold"
+  Foreground="DarkBlue"
+      TextWrapping="Wrap"/>
+         <TextBlock Text="{Binding Url}" 
+         FontSize="14"
+        Foreground="Blue"
+              Margin="0,5,0,0"
+       TextWrapping="Wrap"/>
+         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+ <TextBlock Text="Install Requirements: " 
+       FontSize="12"
+    Foreground="Gray"/>
+     <TextBlock Text="{Binding InstallRequirements}" 
+    FontSize="12"
+      FontWeight="Bold"
+       Foreground="DarkGreen"/>
+       </StackPanel>
+       </StackPanel>
+
+              <!-- Action Buttons -->
+          <StackPanel Grid.Column="2" 
+         Spacing="8"
+   Margin="15,0,0,0">
+             <Button Content="▲ Up"
+    Click="OnMoveUpClick"
+      Tag="{Binding}"
+      Width="100"
+    Padding="8,6"
+    FontSize="14"
+         HorizontalContentAlignment="Center"
+Background="#E3F2FD"/>
+
+       <Button Content="▼ Down"
+            Click="OnMoveDownClick"
+    Tag="{Binding}"
+      Width="100"
+          Padding="8,6"
+     FontSize="14"
+          HorizontalContentAlignment="Center"
+     Background="#E3F2FD"/>
+
+<Button Content="✏️ Edit"
+             Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).EditRepositoryCommand}"
+   CommandParameter="{Binding}"
+        Width="100"
+Padding="8,6"
+   FontSize="14"
+     HorizontalContentAlignment="Center"
+       Background="LightBlue"/>
+
+    <Button Content="🗑️ Delete"
+            Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).DeleteRepositoryCommand}"
+      CommandParameter="{Binding}"
+              Width="100"
+    Padding="8,6"
+         FontSize="14"
+      HorizontalContentAlignment="Center"
+         Background="LightCoral"/>
+       </StackPanel>
+            </Grid>
+                    </Border>
+     </DataTemplate>
+  </ListBox.ItemTemplate>
+   </ListBox>
+           </Border>
+   </StackPanel>
+        </ScrollViewer>
     </DockPanel>
 </Window>

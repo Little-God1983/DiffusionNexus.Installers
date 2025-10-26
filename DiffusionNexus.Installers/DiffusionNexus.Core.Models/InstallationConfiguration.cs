@@ -1,3 +1,4 @@
+using DiffusionNexus.Installers.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -47,6 +48,7 @@ namespace DiffusionNexus.Core.Models
         /// Paths that influence where repositories, models and logs are written.
         /// </summary>
         public PathSettings Paths { get; set; } = new();
+        public VramSettings Vram { get; set; }
     }
 
     /// <summary>
@@ -96,6 +98,7 @@ namespace DiffusionNexus.Core.Models
         /// environment.
         /// </summary>
         public bool CreateVirtualEnvironment { get; set; } = true;
+        public bool CreateVramSettings { get; set; } = true;
 
         /// <summary>
         /// When <see cref="CreateVirtualEnvironment"/> is true this allows the

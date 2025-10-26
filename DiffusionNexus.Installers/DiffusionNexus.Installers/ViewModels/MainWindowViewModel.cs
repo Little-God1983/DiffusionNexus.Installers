@@ -63,8 +63,8 @@ namespace DiffusionNexus.Installers.ViewModels
         public string[] SuggestedTorchVersions { get; } =
             new[] { string.Empty, "2.4.0", "2.3.1", "2.2.2" };
 
-        public VramProfile[] VramProfiles { get; } =
-            Enum.GetValues<VramProfile>();
+        //public VramProfile[] VramProfiles { get; } =
+        //    Enum.GetValues<VramProfile>();
 
         [ObservableProperty]
         private bool _isBusy;
@@ -142,6 +142,21 @@ namespace DiffusionNexus.Installers.ViewModels
                 }
             }
         }
+
+        public bool CreateVramSettings
+        {
+            get => _configuration.Python.CreateVramSettings;
+            set
+            {
+                if (_configuration.Python.CreateVramSettings != value)
+                {
+                    _configuration.Python.CreateVramSettings = value;
+                    OnPropertyChanged();
+                    MarkDirty();
+                }
+            }
+        }
+
 
         public string InterpreterPathOverride
         {
@@ -294,6 +309,10 @@ namespace DiffusionNexus.Installers.ViewModels
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                         "DiffusionNexus"),
                     LogFileName = "install.log"
+                },
+                Vram = new VramSettings
+                {
+                    VramOptions = "default"
                 }
             };
 
