@@ -101,7 +101,7 @@ namespace DiffusionNexus.Core.Models
         /// environment.
         /// </summary>
         public bool CreateVirtualEnvironment { get; set; } = true;
-        public bool CreateVramSettings { get; set; } = true;
+        public bool CreateVramSettings { get; set; } = false;
 
         /// <summary>
         /// When <see cref="CreateVirtualEnvironment"/> is true this allows the

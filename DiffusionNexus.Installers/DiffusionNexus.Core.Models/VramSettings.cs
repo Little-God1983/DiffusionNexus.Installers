@@ -6,7 +6,8 @@
     public class VramSettings
     {
         /// <summary>
-        /// Comma-separated VRAM profile mappings (e.g., "8GB:folder1,12GB:folder2").
+        /// Comma-separated VRAM profile values (e.g., "8,16,24,24+").
+        /// Default values when activated: "8,16,24,24+"
         /// </summary>
         public string VramProfiles { get; set; } = string.Empty;
     }

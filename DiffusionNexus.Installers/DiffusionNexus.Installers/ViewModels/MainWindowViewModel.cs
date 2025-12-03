@@ -151,6 +151,14 @@ namespace DiffusionNexus.Installers.ViewModels
                 if (_configuration.Python.CreateVramSettings != value)
                 {
                     _configuration.Python.CreateVramSettings = value;
+                    
+                    // Set default VRAM profiles when activating
+                    if (value && string.IsNullOrWhiteSpace(_configuration.Vram.VramProfiles))
+                    {
+                        _configuration.Vram.VramProfiles = "8,16,24,24+";
+                        OnPropertyChanged(nameof(VramProfiles));
+                    }
+                    
                     OnPropertyChanged();
                     MarkDirty();
                 }
