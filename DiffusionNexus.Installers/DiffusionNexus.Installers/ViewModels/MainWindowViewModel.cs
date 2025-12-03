@@ -335,7 +335,8 @@ namespace DiffusionNexus.Installers.ViewModels
                 Vram = new VramSettings
                 {
                     VramProfiles = string.Empty
-                }
+                },
+                Id = Guid.NewGuid()
             };
 
             _currentFilePath = null;
@@ -351,7 +352,7 @@ namespace DiffusionNexus.Installers.ViewModels
         }
 
         [RelayCommand]
-        private async Task OpenAsync(CancellationToken cancellationToken)
+        private async Task ImportConfigurationAsync(CancellationToken cancellationToken)
         {
             if (_storageInteraction is null)
             {
