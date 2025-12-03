@@ -272,6 +272,20 @@ namespace DiffusionNexus.Installers.ViewModels
             }
         }
 
+        public string VramProfiles
+        {
+            get => _configuration.Vram?.VramProfiles ?? string.Empty;
+            set
+            {
+                if (_configuration.Vram is not null && _configuration.Vram.VramProfiles != value)
+                {
+                    _configuration.Vram.VramProfiles = value;
+                    OnPropertyChanged();
+                    MarkDirty();
+                }
+            }
+        }
+
         public void AttachStorageInteraction(IStorageInteractionService storageInteraction)
         {
             _storageInteraction = storageInteraction;
@@ -312,7 +326,7 @@ namespace DiffusionNexus.Installers.ViewModels
                 },
                 Vram = new VramSettings
                 {
-                    VramOptions = "default"
+                    VramProfiles = string.Empty
                 }
             };
 
