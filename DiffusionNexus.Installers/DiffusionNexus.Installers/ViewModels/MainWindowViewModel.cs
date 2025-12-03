@@ -274,10 +274,10 @@ namespace DiffusionNexus.Installers.ViewModels
 
         public string VramProfiles
         {
-            get => _configuration.Vram?.VramProfiles ?? string.Empty;
+            get => _configuration.Vram.VramProfiles;
             set
             {
-                if (_configuration.Vram is not null && _configuration.Vram.VramProfiles != value)
+                if (_configuration.Vram.VramProfiles != value)
                 {
                     _configuration.Vram.VramProfiles = value;
                     OnPropertyChanged();

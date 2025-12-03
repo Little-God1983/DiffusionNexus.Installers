@@ -47,7 +47,11 @@ namespace DiffusionNexus.Core.Models
         /// Paths that influence where repositories, models and logs are written.
         /// </summary>
         public PathSettings Paths { get; set; } = new();
-        public VramSettings Vram { get; set; }
+
+        /// <summary>
+        /// VRAM settings for model downloads and GPU configuration.
+        /// </summary>
+        public VramSettings Vram { get; set; } = new();
     }
 
     /// <summary>

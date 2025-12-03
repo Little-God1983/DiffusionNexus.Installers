@@ -22,6 +22,7 @@ namespace DiffusionNexus.Installers.Views
         {
             if (DataContext is MainWindowViewModel vm)
             {
+                vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
             }
         }
@@ -43,6 +44,77 @@ namespace DiffusionNexus.Installers.Views
                 DataContext is MainWindowViewModel vm)
             {
                 vm.MoveRepositoryDownWithParameter(repository);
+            }
+        }
+
+        private sealed class AvaloniaStorageInteractionService : IStorageInteractionService
+        {
+            private readonly Window _window;
+
+            public AvaloniaStorageInteractionService(Window window)
+            {
+                _window = window;
+            }
+
+            public async Task<string?> PickOpenFileAsync(CancellationToken cancellationToken = default)
+            {
+                var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Open Configuration",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[]
+                    {
+                        new FilePickerFileType("Configuration Files")
+                        {
+                            Patterns = new[] { "*.json", "*.xml" }
+                        },
+                        new FilePickerFileType("JSON Files")
+                        {
+                            Patterns = new[] { "*.json" }
+                        },
+                        new FilePickerFileType("XML Files")
+                        {
+                            Patterns = new[] { "*.xml" }
+                        },
+                        FilePickerFileTypes.All
+                    }
+                });
+
+                return files.FirstOrDefault()?.Path.LocalPath;
+            }
+
+            public async Task<string?> PickSaveFileAsync(string? suggestedFileName, CancellationToken cancellationToken = default)
+            {
+                var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Save Configuration",
+                    SuggestedFileName = suggestedFileName ?? "configuration.json",
+                    DefaultExtension = "json",
+                    FileTypeChoices = new[]
+                    {
+                        new FilePickerFileType("JSON Files")
+                        {
+                            Patterns = new[] { "*.json" }
+                        },
+                        new FilePickerFileType("XML Files")
+                        {
+                            Patterns = new[] { "*.xml" }
+                        }
+                    }
+                });
+
+                return file?.Path.LocalPath;
+            }
+
+            public async Task<string?> PickFolderAsync(CancellationToken cancellationToken = default)
+            {
+                var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+                {
+                    Title = "Select Folder",
+                    AllowMultiple = false
+                });
+
+                return folders.FirstOrDefault()?.Path.LocalPath;
             }
         }
 
