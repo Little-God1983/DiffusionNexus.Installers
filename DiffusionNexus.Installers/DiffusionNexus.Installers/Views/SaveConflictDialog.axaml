@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DiffusionNexus.Installers.Views.SaveConflictDialog"
+        x:CompileBindings="False"
+        Title="Save Conflict"
+        Width="450"
+        Height="200"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    
+    <StackPanel Margin="20" Spacing="20">
+        <TextBlock FontSize="14" TextWrapping="Wrap">
+            <Run Text="A configuration with the name "/>
+            <Run Text="{Binding ConfigurationName}" FontWeight="Bold"/>
+            <Run Text=" already exists in the database."/>
+        </TextBlock>
+        
+        <TextBlock Text="What would you like to do?" FontSize="14"/>
+        
+        <StackPanel Spacing="10">
+            <Button Content="Cancel" 
+                    HorizontalAlignment="Stretch"
+                    Click="OnCancelClick"
+                    Padding="10"/>
+            
+            <Button Content="Overwrite Existing"
+                    HorizontalAlignment="Stretch"
+                    Click="OnOverwriteClick"
+                    Padding="10"
+                    Classes="accent"/>
+            
+            <Button Content="Save as New Configuration"
+                    HorizontalAlignment="Stretch"
+                    Click="OnSaveAsNewClick"
+                    Padding="10"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

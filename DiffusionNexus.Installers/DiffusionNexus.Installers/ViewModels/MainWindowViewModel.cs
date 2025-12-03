@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DiffusionNexus.Core.Models;
 using DiffusionNexus.Core.Services;
+using DiffusionNexus.DataAccess;
+using Microsoft.EntityFrameworkCore;
 
 namespace DiffusionNexus.Installers.ViewModels
 {
@@ -24,25 +26,42 @@ namespace DiffusionNexus.Installers.ViewModels
         Task<GitRepository?> EditRepositoryAsync(GitRepository repository);
     }
 
+    public interface IConflictResolutionService
+    {
+        Task<SaveConflictResolution> ResolveSaveConflictAsync(string configurationName);
+    }
+
     public partial class MainWindowViewModel : ViewModelBase
     {
         private readonly ConfigurationService _configurationService = new();
         private readonly InstallationEngine _installationEngine = new();
+        private readonly ConfigurationRepository _configurationRepository;
         private InstallationConfiguration _configuration = new();
         private string? _currentFilePath;
         private ConfigurationFormat? _currentFormat;
         private IStorageInteractionService? _storageInteraction;
         private IGitRepositoryInteractionService? _gitRepositoryInteraction;
+        private IConflictResolutionService? _conflictResolution;
 
         public event EventHandler<GitRepositoryItemViewModel>? EditRepositoryRequested;
 
         public MainWindowViewModel()
         {
+            var options = new DbContextOptionsBuilder<DiffusionNexusContext>().Options;
+            var context = new DiffusionNexusContext(options);
+            
+            // Ensure database is created
+            context.Database.EnsureCreated();
+            
+            _configurationRepository = new ConfigurationRepository(context);
+            
             GitRepositories = new ObservableCollection<GitRepositoryItemViewModel>();
             ModelDownloads = new ObservableCollection<ModelDownloadItemViewModel>();
             Logs = new ObservableCollection<InstallLogEntryViewModel>();
+            SavedConfigurations = new ObservableCollection<ConfigurationListItemViewModel>();
 
             NewConfiguration();
+            _ = LoadSavedConfigurationsAsync();
         }
 
         public ObservableCollection<GitRepositoryItemViewModel> GitRepositories { get; }
@@ -50,6 +69,8 @@ namespace DiffusionNexus.Installers.ViewModels
         public ObservableCollection<ModelDownloadItemViewModel> ModelDownloads { get; }
 
         public ObservableCollection<InstallLogEntryViewModel> Logs { get; }
+
+        public ObservableCollection<ConfigurationListItemViewModel> SavedConfigurations { get; }
 
         public RepositoryType[] RepositoryTypes { get; } =
             Enum.GetValues<RepositoryType>();
@@ -86,6 +107,17 @@ namespace DiffusionNexus.Installers.ViewModels
 
         [ObservableProperty]
         private ModelDownloadItemViewModel? _selectedModel;
+
+        [ObservableProperty]
+        private ConfigurationListItemViewModel? _selectedSavedConfiguration;
+
+        partial void OnSelectedSavedConfigurationChanged(ConfigurationListItemViewModel? value)
+        {
+            if (value is not null)
+            {
+                _ = LoadConfigurationFromDatabaseAsync(value);
+            }
+        }
 
         public RepositoryType SelectedRepositoryType
         {
@@ -302,6 +334,11 @@ namespace DiffusionNexus.Installers.ViewModels
         public void AttachGitRepositoryInteraction(IGitRepositoryInteractionService gitRepositoryInteraction)
         {
             _gitRepositoryInteraction = gitRepositoryInteraction;
+        }
+
+        public void AttachConflictResolutionService(IConflictResolutionService conflictResolution)
+        {
+            _conflictResolution = conflictResolution;
         }
 
         [RelayCommand]
@@ -811,6 +848,84 @@ namespace DiffusionNexus.Installers.ViewModels
             ValidationSummary = string.Empty;
             PreviewPlan = string.Empty;
         }
+
+        private async Task LoadSavedConfigurationsAsync()
+        {
+            var configurations = await _configurationRepository.GetAllAsync();
+            SavedConfigurations.Clear();
+            foreach (var config in configurations)
+            {
+                SavedConfigurations.Add(new ConfigurationListItemViewModel(config, MarkDirty));
+            }
+        }
+
+        [RelayCommand]
+        private async Task LoadConfigurationFromDatabaseAsync(ConfigurationListItemViewModel? item)
+        {
+            if (item is null)
+            {
+                return;
+            }
+
+            var configuration = await _configurationRepository.GetByIdAsync(item.Id);
+            if (configuration is null)
+            {
+                return;
+            }
+
+            _configuration = configuration;
+            _currentFilePath = null;
+            _currentFormat = null;
+            ReloadCollectionsFromConfiguration();
+            UpdateCompatibilityHint();
+            ValidationSummary = string.Empty;
+            PreviewPlan = string.Empty;
+            OnPropertyChanged(string.Empty);
+        }
+
+        [RelayCommand]
+        private async Task SaveToDatabaseAsync(CancellationToken cancellationToken)
+        {
+            if (!TryValidate(out var summary))
+            {
+                ValidationSummary = summary;
+                return;
+            }
+
+            ValidationSummary = summary;
+
+            var exists = await _configurationRepository.ExistsAsync(_configuration.Id, cancellationToken);
+
+            if (exists)
+            {
+                if (_conflictResolution is null)
+                {
+                    return;
+                }
+
+                var resolution = await _conflictResolution.ResolveSaveConflictAsync(_configuration.Name);
+
+                switch (resolution)
+                {
+                    case SaveConflictResolution.Cancel:
+                        return;
+                    
+                    case SaveConflictResolution.Overwrite:
+                        await _configurationRepository.SaveAsync(_configuration, cancellationToken);
+                        break;
+                    
+                    case SaveConflictResolution.SaveAsNew:
+                        _configuration = await _configurationRepository.SaveAsNewAsync(_configuration, cancellationToken);
+                        break;
+                }
+            }
+            else
+            {
+                await _configurationRepository.SaveAsync(_configuration, cancellationToken);
+            }
+
+            await LoadSavedConfigurationsAsync();
+        }
     }
 
     public partial class GitRepositoryItemViewModel : ObservableObject
@@ -942,5 +1057,21 @@ namespace DiffusionNexus.Installers.ViewModels
         public string Message { get; }
         public LogLevel Level { get; }
         public string Display => $"[{Timestamp:HH:mm:ss}] {Level}: {Message}";
+    }
+
+    public class ConfigurationListItemViewModel
+    {
+        public ConfigurationListItemViewModel(InstallationConfiguration configuration, Action onChanged)
+        {
+            Configuration = configuration;
+            OnChanged = onChanged;
+        }
+
+        public InstallationConfiguration Configuration { get; }
+        public Action OnChanged { get; }
+        public Guid Id => Configuration.Id;
+        public string Name => Configuration.Name;
+        public string Description => Configuration.Description;
+        public string Display => string.IsNullOrWhiteSpace(Description) ? Name : $"{Name} - {Description}";
     }
 }

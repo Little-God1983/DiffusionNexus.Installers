@@ -24,6 +24,7 @@ namespace DiffusionNexus.Installers.Views
             {
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
+                vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(this));
             }
         }
 
@@ -154,6 +155,23 @@ namespace DiffusionNexus.Installers.Views
 
                 result.Id = repository.Id;
                 result.Priority = repository.Priority;
+                return result;
+            }
+        }
+
+        private sealed class AvaloniaConflictResolutionService : IConflictResolutionService
+        {
+            private readonly Window _window;
+
+            public AvaloniaConflictResolutionService(Window window)
+            {
+                _window = window;
+            }
+
+            public async Task<SaveConflictResolution> ResolveSaveConflictAsync(string configurationName)
+            {
+                var dialog = new SaveConflictDialog(configurationName);
+                var result = await dialog.ShowDialog<SaveConflictResolution>(_window);
                 return result;
             }
         }

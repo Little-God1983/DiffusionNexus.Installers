@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="../DiffusionNexus.Core.Models/DiffusionNexus.Core.Models.csproj" />
     <ProjectReference Include="../DiffusionNexus.Core.Services/DiffusionNexus.Core.Services.csproj" />
+    <ProjectReference Include="../DiffusionNexus.DataAccess/DiffusionNexus.DataAccess.csproj" />
   </ItemGroup>
 
   <ItemGroup>

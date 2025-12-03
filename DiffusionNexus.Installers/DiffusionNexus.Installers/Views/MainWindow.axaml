@@ -12,9 +12,25 @@
             <MenuItem Header="_File">
            <MenuItem Header="_New" Command="{Binding NewConfigurationCommand}" />
                 <MenuItem Header="_Import" Command="{Binding ImportConfigurationCommand}" />
-    <MenuItem Header="_Save" Command="{Binding SaveCommand}" />
+    <MenuItem Header="_Save" Command="{Binding SaveToDatabaseCommand}" />
     <MenuItem Header="Export _As" Command="{Binding SaveAsCommand}" />
   </MenuItem>
+            <MenuItem Header="_Configurations">
+                <MenuItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Configurations:" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding SavedConfigurations}"
+                                  MinWidth="200"
+                                  SelectedItem="{Binding SelectedSavedConfiguration}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Display}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
    </Menu>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
