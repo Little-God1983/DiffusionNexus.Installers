@@ -1,5 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
@@ -118,6 +120,24 @@ public partial class InstallationViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void OpenYoutube()
+    {
+        OpenUrl("https://youtube.com/@AIKnowledge2Go");
+    }
+
+    [RelayCommand]
+    private void OpenCivitai()
+    {
+        OpenUrl("https://civitai.com/user/AIknowlege2go");
+    }
+
+    [RelayCommand]
+    private void OpenPatreon()
+    {
+        OpenUrl("https://patreon.com/AIKnowledgeCentral?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink");
+    }
+
     #endregion
 
     #region Private Helpers
@@ -125,6 +145,29 @@ public partial class InstallationViewModel : ViewModelBase
     private void AddLogEntry(string message, LogEntryLevel level)
     {
         LogEntries.Add(new InstallationLogEntry(message, level));
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
+            }
+        }
+        catch
+        {
+            // Silently fail if browser cannot be opened
+        }
     }
 
     #endregion
