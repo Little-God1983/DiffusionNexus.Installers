@@ -10,9 +10,7 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-           <MenuItem Header="_New" Command="{Binding NewConfigurationCommand}" />
                 <MenuItem Header="_Import" Command="{Binding ImportConfigurationCommand}" />
-    <MenuItem Header="_Save" Command="{Binding SaveToDatabaseCommand}" />
     <MenuItem Header="Export _As" Command="{Binding SaveAsCommand}" />
   </MenuItem>
             <MenuItem Header="_Configurations">
@@ -28,9 +26,17 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                        <Button Content="➕ New"
+                                Command="{Binding NewConfigurationCommand}"
+                                Margin="8,0,0,0"
+                                Padding="8,4" />
+                        <Button Content="💾 Save"
+                                Command="{Binding SaveToDatabaseCommand}"
+                                Margin="4,0,0,0"
+                                Padding="8,4" />
                         <Button Content="✏️ Rename"
                                 Command="{Binding RenameConfigurationCommand}"
-                                Margin="8,0,0,0"
+                                Margin="4,0,0,0"
                                 Padding="8,4"
                                 IsEnabled="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         <Button Content="🗑️ Delete"
