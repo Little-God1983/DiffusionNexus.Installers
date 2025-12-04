@@ -2,117 +2,113 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace DiffusionNexus.DataAccess
+namespace DiffusionNexus.DataAccess;
+
+/// <summary>
+/// Entity Framework Core DbContext for DiffusionNexus configurations.
+/// Connection string should be injected via DbContextOptions.
+/// </summary>
+public sealed class DiffusionNexusContext : DbContext
 {
-    public class DiffusionNexusContext : DbContext
+    public DbSet<InstallationConfiguration> InstallationConfigurations { get; set; } = null!;
+
+    public DiffusionNexusContext(DbContextOptions<DiffusionNexusContext> options) : base(options)
     {
-        public DbSet<InstallationConfiguration> InstallationConfigurations { get; set; }
-
-        public string DbPath { get; }
-
-        public DiffusionNexusContext(DbContextOptions<DiffusionNexusContext> options) : base(options)
-        {
-            var folder = Environment.SpecialFolder.LocalApplicationData;
-            var path = Environment.GetFolderPath(folder);
-            DbPath = System.IO.Path.Join(path, "diffusion_nexus.db");
-            
-            Database.EnsureCreated();
-        }
-
-        // The following configures EF to create a Sqlite database file in the
-        // special "local" folder for your platform.
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
-        {
-            if (!options.IsConfigured)
-            {
-                options.UseSqlite($"Data Source={DbPath}");
-            }
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<InstallationConfiguration>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                
-                entity.HasIndex(e => e.Name).IsUnique();
-
-                // Configure owned types (complex types that don't need their own tables)
-                entity.OwnsOne(e => e.Repository, navigation =>
-                {
-                    navigation.Property(r => r.Type).IsRequired();
-                    navigation.Property(r => r.RepositoryUrl).IsRequired();
-                });
-
-                entity.OwnsOne(e => e.Python, navigation =>
-                {
-                    navigation.Property(p => p.PythonVersion).IsRequired();
-                });
-
-                entity.OwnsOne(e => e.Torch);
-
-                entity.OwnsOne(e => e.Paths, navigation =>
-                {
-                    navigation.Property(p => p.RootDirectory).IsRequired();
-                });
-
-                entity.OwnsOne(e => e.Vram);
-
-                // Configure collections - these will be separate tables with foreign keys
-                entity.HasMany(e => e.GitRepositories)
-                    .WithOne()
-                    .HasForeignKey("InstallationConfigurationId")
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasMany(e => e.ModelDownloads)
-                    .WithOne()
-                    .HasForeignKey("InstallationConfigurationId")
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            modelBuilder.Entity<GitRepository>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-            });
-
-            modelBuilder.Entity<ModelDownload>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                
-                // Configure the DownloadLinks collection
-                entity.HasMany(m => m.DownloadLinks)
-                    .WithOne()
-                    .HasForeignKey("ModelDownloadId")
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            modelBuilder.Entity<ModelDownloadLink>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-            });
-        }
+        // Ensure database schema is created (suitable for SQLite/LocalDB installer scenarios)
+        Database.EnsureCreated();
     }
 
-    /// <summary>
-    /// Design-time factory for Entity Framework Core migrations.
-    /// This allows EF tools to create instances of the DbContext at design time.
-    /// </summary>
-    public class DiffusionNexusContextFactory : IDesignTimeDbContextFactory<DiffusionNexusContext>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        public DiffusionNexusContext CreateDbContext(string[] args)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<DiffusionNexusContext>();
-            
-            // Use a temporary path for design-time operations
-            var folder = Environment.SpecialFolder.LocalApplicationData;
-            var path = Environment.GetFolderPath(folder);
-            var dbPath = System.IO.Path.Join(path, "diffusion_nexus.db");
-            
-            optionsBuilder.UseSqlite($"Data Source={dbPath}");
+        base.OnModelCreating(modelBuilder);
 
-            return new DiffusionNexusContext(optionsBuilder.Options);
-        }
+        ConfigureInstallationConfiguration(modelBuilder);
+        ConfigureGitRepository(modelBuilder);
+        ConfigureModelDownload(modelBuilder);
+        ConfigureModelDownloadLink(modelBuilder);
+    }
+
+    private static void ConfigureInstallationConfiguration(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<InstallationConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+
+            // Owned types (stored in same table as columns)
+            entity.OwnsOne(e => e.Repository, nav =>
+            {
+                nav.Property(r => r.Type).IsRequired();
+                nav.Property(r => r.RepositoryUrl).IsRequired();
+            });
+
+            entity.OwnsOne(e => e.Python, nav =>
+            {
+                nav.Property(p => p.PythonVersion).IsRequired();
+            });
+
+            entity.OwnsOne(e => e.Torch);
+            entity.OwnsOne(e => e.Paths, nav =>
+            {
+                nav.Property(p => p.RootDirectory).IsRequired();
+            });
+
+            entity.OwnsOne(e => e.Vram);
+
+            // Collections (separate tables)
+            entity.HasMany(e => e.GitRepositories)
+                .WithOne()
+                .HasForeignKey("InstallationConfigurationId")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.ModelDownloads)
+                .WithOne()
+                .HasForeignKey("InstallationConfigurationId")
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureGitRepository(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<GitRepository>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+    }
+
+    private static void ConfigureModelDownload(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ModelDownload>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasMany(m => m.DownloadLinks)
+                .WithOne()
+                .HasForeignKey("ModelDownloadId")
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureModelDownloadLink(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ModelDownloadLink>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+    }
+}
+
+/// <summary>
+/// Design-time factory for Entity Framework Core migrations.
+/// </summary>
+public sealed class DiffusionNexusContextFactory : IDesignTimeDbContextFactory<DiffusionNexusContext>
+{
+    public DiffusionNexusContext CreateDbContext(string[] args)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiffusionNexusContext>();
+        var dbPath = ServiceCollectionExtensions.GetDefaultDatabasePath();
+        optionsBuilder.UseSqlite($"Data Source={dbPath}");
+
+        return new DiffusionNexusContext(optionsBuilder.Options);
     }
 }
