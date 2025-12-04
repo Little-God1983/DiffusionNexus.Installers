@@ -448,6 +448,7 @@ namespace DiffusionNexus.Installers.ViewModels
 
             _currentFilePath = null;
             _currentFormat = null;
+            SelectedSavedConfiguration = null;
             GitRepositories.Clear();
             ModelDownloads.Clear();
             Logs.Clear();
