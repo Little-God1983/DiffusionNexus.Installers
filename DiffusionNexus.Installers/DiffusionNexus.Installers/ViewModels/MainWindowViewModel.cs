@@ -245,6 +245,42 @@ namespace DiffusionNexus.Installers.ViewModels
             }
         }
 
+        public bool InstallTriton
+        {
+            get => _configuration.Python.InstallTriton;
+            set
+            {
+                if (_configuration.Python.InstallTriton != value)
+                {
+                    _configuration.Python.InstallTriton = value;
+                    OnPropertyChanged();
+                    MarkDirty();
+                }
+            }
+        }
+
+        public bool InstallSageAttention
+        {
+            get => _configuration.Python.InstallSageAttention;
+            set
+            {
+                if (_configuration.Python.InstallSageAttention != value)
+                {
+                    _configuration.Python.InstallSageAttention = value;
+                    
+                    // Sage Attention requires Triton, so enable it automatically
+                    if (value && !_configuration.Python.InstallTriton)
+                    {
+                        _configuration.Python.InstallTriton = true;
+                        OnPropertyChanged(nameof(InstallTriton));
+                    }
+                    
+                    OnPropertyChanged();
+                    MarkDirty();
+                }
+            }
+        }
+
         public string CudaVersion
         {
             get => _configuration.Torch.CudaVersion;

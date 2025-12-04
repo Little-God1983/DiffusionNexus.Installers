@@ -108,6 +108,17 @@ namespace DiffusionNexus.Core.Models
         /// user to override the folder name that will be created.
         /// </summary>
         public string VirtualEnvironmentName { get; set; } = "venv";
+
+        /// <summary>
+        /// Controls whether Triton should be installed.
+        /// </summary>
+        public bool InstallTriton { get; set; } = false;
+
+        /// <summary>
+        /// Controls whether Sage Attention should be installed.
+        /// Note: Sage Attention requires Triton to be installed.
+        /// </summary>
+        public bool InstallSageAttention { get; set; } = false;
     }
 
     /// <summary>

@@ -122,6 +122,45 @@
           </StackPanel>
      </Border>
 
+        <!-- Python Extensions Section -->
+        <Border Padding="16"
+                BorderThickness="1"
+                CornerRadius="6"
+                Background="{DynamicResource ThemeControlLowBrush}"
+                BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+            <StackPanel Spacing="12">
+                <TextBlock Text="Python Extensions"
+                           FontSize="16"
+                           FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="Auto,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="12"
+                      RowSpacing="8">
+                    <CheckBox Grid.Row="0"
+                              Content="Install Triton"
+                              IsChecked="{Binding InstallTriton}"
+                              VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               Text="Triton compiler for optimized GPU kernels"
+                               FontSize="12"
+                               Foreground="Gray"
+                               VerticalAlignment="Center" />
+
+                    <CheckBox Grid.Row="1"
+                              Content="Install Sage Attention"
+                              IsChecked="{Binding InstallSageAttention}"
+                              VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Text="Sage Attention optimization (requires Triton)"
+                               FontSize="12"
+                               Foreground="Gray"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
         <!-- VRAM Section -->
           <Border Padding="16"
                BorderThickness="1"
