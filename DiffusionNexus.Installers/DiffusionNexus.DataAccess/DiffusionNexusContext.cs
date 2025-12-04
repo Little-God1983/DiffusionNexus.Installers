@@ -1,5 +1,6 @@
 ﻿using DiffusionNexus.Core.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace DiffusionNexus.DataAccess
 {
@@ -21,7 +22,12 @@ namespace DiffusionNexus.DataAccess
         // The following configures EF to create a Sqlite database file in the
         // special "local" folder for your platform.
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite($"Data Source={DbPath}");
+        {
+            if (!options.IsConfigured)
+            {
+                options.UseSqlite($"Data Source={DbPath}");
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,7 +80,39 @@ namespace DiffusionNexus.DataAccess
             modelBuilder.Entity<ModelDownload>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                
+                // Configure the DownloadLinks collection
+                entity.HasMany(m => m.DownloadLinks)
+                    .WithOne()
+                    .HasForeignKey("ModelDownloadId")
+                    .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<ModelDownloadLink>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+            });
+        }
+    }
+
+    /// <summary>
+    /// Design-time factory for Entity Framework Core migrations.
+    /// This allows EF tools to create instances of the DbContext at design time.
+    /// </summary>
+    public class DiffusionNexusContextFactory : IDesignTimeDbContextFactory<DiffusionNexusContext>
+    {
+        public DiffusionNexusContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<DiffusionNexusContext>();
+            
+            // Use a temporary path for design-time operations
+            var folder = Environment.SpecialFolder.LocalApplicationData;
+            var path = Environment.GetFolderPath(folder);
+            var dbPath = System.IO.Path.Join(path, "diffusion_nexus.db");
+            
+            optionsBuilder.UseSqlite($"Data Source={dbPath}");
+
+            return new DiffusionNexusContext(optionsBuilder.Options);
         }
     }
 }
