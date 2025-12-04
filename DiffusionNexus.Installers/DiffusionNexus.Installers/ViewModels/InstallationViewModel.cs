@@ -28,6 +28,10 @@ public partial class InstallationViewModel : ViewModelBase
     public InstallationViewModel()
     {
         LogEntries = [];
+        AvailableVramProfiles = [];
+        
+        // Initialize with default VRAM profiles
+        SetAvailableVramProfiles([4, 6, 8, 12, 16, 24, 32, 48, 64]);
     }
 
     /// <summary>
@@ -54,7 +58,39 @@ public partial class InstallationViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusMessage = "Ready to install";
 
+    [ObservableProperty]
+    private int _selectedVramProfile = 8;
+
     public ObservableCollection<InstallationLogEntry> LogEntries { get; }
+
+    public ObservableCollection<VramProfileOption> AvailableVramProfiles { get; }
+
+    #endregion
+
+    #region VRAM Profile Methods
+
+    /// <summary>
+    /// Sets the available VRAM profiles based on configuration.
+    /// </summary>
+    public void SetAvailableVramProfiles(int[] profiles)
+    {
+        AvailableVramProfiles.Clear();
+        foreach (var profile in profiles)
+        {
+            var option = new VramProfileOption(profile, profile == SelectedVramProfile, SelectVramProfile);
+            AvailableVramProfiles.Add(option);
+        }
+    }
+
+    private void SelectVramProfile(int value)
+    {
+        SelectedVramProfile = value;
+        foreach (var profile in AvailableVramProfiles)
+        {
+            profile.IsSelected = profile.Value == value;
+        }
+        AddLogEntry($"VRAM profile set to {value} GB", LogEntryLevel.Info);
+    }
 
     #endregion
 
@@ -90,6 +126,7 @@ public partial class InstallationViewModel : ViewModelBase
         {
             AddLogEntry("Installation started", LogEntryLevel.Info);
             AddLogEntry($"Target folder: {TargetInstallFolder}", LogEntryLevel.Info);
+            AddLogEntry($"VRAM Profile: {SelectedVramProfile} GB", LogEntryLevel.Info);
 
             // Placeholder for actual installation logic
             for (var i = 0; i <= 100; i += 10)
@@ -171,6 +208,36 @@ public partial class InstallationViewModel : ViewModelBase
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents a VRAM profile option for selection.
+/// </summary>
+public partial class VramProfileOption : ObservableObject
+{
+    private readonly Action<int>? _onSelected;
+
+    public VramProfileOption(int value, bool isSelected = false, Action<int>? onSelected = null)
+    {
+        Value = value;
+        _isSelected = isSelected;
+        _onSelected = onSelected;
+    }
+
+    public int Value { get; }
+    
+    public string DisplayName => $"{Value} GB";
+
+    [ObservableProperty]
+    private bool _isSelected;
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        if (value)
+        {
+            _onSelected?.Invoke(Value);
+        }
+    }
 }
 
 /// <summary>
