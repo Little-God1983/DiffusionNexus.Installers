@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace DiffusionNexus.Core.Models
@@ -12,6 +13,11 @@ namespace DiffusionNexus.Core.Models
 
         [Required]
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Collection of download links for this model. Each link can have its own VRAM profile.
+        /// </summary>
+        public List<ModelDownloadLink> DownloadLinks { get; set; } = new();
 
         [Required]
         public string Url { get; set; } = string.Empty;

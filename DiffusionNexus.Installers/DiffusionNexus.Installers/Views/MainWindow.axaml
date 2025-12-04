@@ -45,9 +45,8 @@
    </Menu>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-   <StackPanel>
-       <StackPanel Margin="12" Spacing="12">
-    <!-- Repository Section -->
+            <StackPanel Margin="12" Spacing="12">
+                <!-- Repository Section -->
           <Border Padding="16"
              BorderThickness="1"
          CornerRadius="6"
@@ -193,7 +192,6 @@ FontSize="16"
          </Grid>
           </StackPanel>
        </Border>
-             </StackPanel>
 
                 <!-- Git Repositories Section -->
    <TextBlock Text="Git Repositories"
@@ -319,7 +317,103 @@ Padding="8,6"
   </ListBox.ItemTemplate>
    </ListBox>
            </Border>
-   </StackPanel>
+
+        <!-- Model Downloads Section -->
+        <TextBlock Text="Model Downloads"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Margin="20"
+                   HorizontalAlignment="Center"/>
+
+        <Button Content="➕ Add Model"
+                Command="{Binding AddModelCommand}"
+                HorizontalAlignment="Center"
+                Margin="10"
+                Padding="30,12"
+                FontSize="16"
+                FontWeight="Bold"/>
+
+        <TextBlock Text="{Binding ModelDownloads.Count, StringFormat='Total Models: {0}'}"
+                   HorizontalAlignment="Center"
+                   FontSize="16"
+                   FontWeight="Bold"
+                   Foreground="Green"
+                   Margin="10"/>
+
+        <Border BorderBrush="DarkGray"
+                BorderThickness="2"
+                Margin="20"
+                CornerRadius="8">
+            <ListBox ItemsSource="{Binding ModelDownloads}"
+                     SelectedItem="{Binding SelectedModel}"
+                     Background="White"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="Gray"
+                                BorderThickness="1"
+                                Padding="15"
+                                Margin="8"
+                                Background="WhiteSmoke"
+                                CornerRadius="6">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- Enable Checkbox -->
+                                <CheckBox Grid.Column="0"
+                                          IsChecked="{Binding Enabled}"
+                                          VerticalAlignment="Top"
+                                          Margin="0,0,15,0"/>
+
+                                <!-- Model Info -->
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="DarkBlue"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding Model.DownloadLinks.Count, StringFormat='Download Links: {0}'}"
+                                               FontSize="14"
+                                               Foreground="Gray"
+                                               Margin="0,5,0,0"/>
+                                    <TextBlock Text="{Binding Destination}"
+                                               FontSize="12"
+                                               Foreground="Gray"
+                                               Margin="0,5,0,0"
+                                               TextWrapping="Wrap">
+                                        <TextBlock.IsVisible>
+                                            <Binding Path="Destination" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+                                        </TextBlock.IsVisible>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Action Buttons -->
+                                <StackPanel Grid.Column="2"
+                                            Spacing="8"
+                                            Margin="15,0,0,0">
+                                    <Button Content="✏️ Edit"
+                                            Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).EditModelCommand}"
+                                            CommandParameter="{Binding}"
+                                            Width="100"
+                                            Padding="8,6"
+                                            FontSize="14"
+                                            HorizontalContentAlignment="Center"
+                                            Background="LightBlue"/>
+
+                                    <Button Content="🗑️ Delete"
+                                            Command="{Binding $parent[ListBox].((vm:MainWindowViewModel)DataContext).DeleteModelCommand}"
+                                            CommandParameter="{Binding}"
+                                            Width="100"
+                                            Padding="8,6"
+                                            FontSize="14"
+                                            HorizontalContentAlignment="Center"
+                                            Background="LightCoral"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+            </StackPanel>
         </ScrollViewer>
     </DockPanel>
 </Window>

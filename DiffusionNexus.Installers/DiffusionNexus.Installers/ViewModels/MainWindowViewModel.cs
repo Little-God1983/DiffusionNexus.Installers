@@ -41,6 +41,12 @@ namespace DiffusionNexus.Installers.ViewModels
         Task<bool> ConfirmDeleteAsync(string configurationName);
     }
 
+    public interface IModelEditorInteractionService
+    {
+        Task<ModelDownload?> CreateModelAsync(bool vramEnabled, string[] availableVramProfiles);
+        Task<ModelDownload?> EditModelAsync(ModelDownload model, bool vramEnabled, string[] availableVramProfiles);
+    }
+
     public partial class MainWindowViewModel : ViewModelBase
     {
         private readonly ConfigurationService _configurationService = new();
@@ -51,6 +57,7 @@ namespace DiffusionNexus.Installers.ViewModels
         private ConfigurationFormat? _currentFormat;
         private IStorageInteractionService? _storageInteraction;
         private IGitRepositoryInteractionService? _gitRepositoryInteraction;
+        private IModelEditorInteractionService? _modelEditorInteraction;
         private IConflictResolutionService? _conflictResolution;
         private IConfigurationNameService? _nameService;
         private IConfigurationManagementService? _configurationManagement;
@@ -346,6 +353,11 @@ namespace DiffusionNexus.Installers.ViewModels
         public void AttachGitRepositoryInteraction(IGitRepositoryInteractionService gitRepositoryInteraction)
         {
             _gitRepositoryInteraction = gitRepositoryInteraction;
+        }
+
+        public void AttachModelEditorInteraction(IModelEditorInteractionService modelEditorInteraction)
+        {
+            _modelEditorInteraction = modelEditorInteraction;
         }
 
         public void AttachConflictResolutionService(IConflictResolutionService conflictResolution)
@@ -690,32 +702,89 @@ namespace DiffusionNexus.Installers.ViewModels
         }
 
         [RelayCommand]
-        private void AddModel()
+        private async Task AddModelAsync()
         {
-            var model = new ModelDownload
+            if (_modelEditorInteraction is null)
             {
-                Name = "New Model",
-                VramProfile = VramProfile.VRAM_16GB,
-                Enabled = true
-            };
+                return;
+            }
+
+            var vramProfiles = GetAvailableVramProfiles();
+            var model = await _modelEditorInteraction.CreateModelAsync(CreateVramSettings, vramProfiles);
+            if (model is null)
+            {
+                return;
+            }
+
+            _configuration.ModelDownloads.Add(model);
             var vm = new ModelDownloadItemViewModel(model, MarkDirty);
             ModelDownloads.Add(vm);
-            _configuration.ModelDownloads.Add(model);
             SelectedModel = vm;
             MarkDirty();
         }
 
         [RelayCommand]
-        private void RemoveModel()
+        private async Task EditModelAsync(ModelDownloadItemViewModel? modelVm)
         {
-            if (SelectedModel is null)
+            if (modelVm is null || _modelEditorInteraction is null)
             {
                 return;
             }
 
-            _configuration.ModelDownloads.Remove(SelectedModel.Model);
-            ModelDownloads.Remove(SelectedModel);
+            SelectedModel = modelVm;
+
+            var vramProfiles = GetAvailableVramProfiles();
+            var updatedModel = await _modelEditorInteraction.EditModelAsync(modelVm.Model, CreateVramSettings, vramProfiles);
+            if (updatedModel is null)
+            {
+                return;
+            }
+
+            modelVm.Name = updatedModel.Name;
+            modelVm.Destination = updatedModel.Destination;
+            modelVm.Enabled = updatedModel.Enabled;
             MarkDirty();
+        }
+
+        [RelayCommand]
+        private void DeleteModel(ModelDownloadItemViewModel? modelVm)
+        {
+            if (modelVm is null)
+            {
+                return;
+            }
+
+            var index = ModelDownloads.IndexOf(modelVm);
+            _configuration.ModelDownloads.Remove(modelVm.Model);
+            ModelDownloads.Remove(modelVm);
+
+            if (SelectedModel == modelVm)
+            {
+                if (ModelDownloads.Count == 0)
+                {
+                    SelectedModel = null;
+                }
+                else
+                {
+                    var nextIndex = Math.Clamp(index, 0, ModelDownloads.Count - 1);
+                    SelectedModel = ModelDownloads[nextIndex];
+                }
+            }
+
+            MarkDirty();
+        }
+
+        private string[] GetAvailableVramProfiles()
+        {
+            if (!CreateVramSettings || string.IsNullOrWhiteSpace(VramProfiles))
+            {
+                return [];
+            }
+
+            return VramProfiles
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(p => p.EndsWith('+') ? p : p + "GB")
+                .ToArray();
         }
 
         [RelayCommand]

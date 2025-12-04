@@ -24,6 +24,7 @@ namespace DiffusionNexus.Installers.Views
             {
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
+                vm.AttachModelEditorInteraction(new AvaloniaModelEditorInteractionService(this));
                 vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(this));
                 vm.AttachConfigurationNameService(new AvaloniaConfigurationNameService(this, vm));
                 vm.AttachConfigurationManagementService(new AvaloniaConfigurationManagementService(this));
@@ -157,6 +158,56 @@ namespace DiffusionNexus.Installers.Views
 
                 result.Id = repository.Id;
                 result.Priority = repository.Priority;
+                return result;
+            }
+        }
+
+        private sealed class AvaloniaModelEditorInteractionService : IModelEditorInteractionService
+        {
+            private readonly Window _window;
+
+            public AvaloniaModelEditorInteractionService(Window window)
+            {
+                _window = window;
+            }
+
+            public Task<ModelDownload?> CreateModelAsync(bool vramEnabled, string[] availableVramProfiles)
+            {
+                var draft = new ModelDownload
+                {
+                    Name = "New Model",
+                    Enabled = true
+                };
+                var dialog = new ModelEditorDialog(draft, vramEnabled, availableVramProfiles, isNew: true);
+                return dialog.ShowDialog<ModelDownload?>(_window);
+            }
+
+            public async Task<ModelDownload?> EditModelAsync(ModelDownload model, bool vramEnabled, string[] availableVramProfiles)
+            {
+                var draft = new ModelDownload
+                {
+                    Id = model.Id,
+                    Name = model.Name,
+                    Destination = model.Destination,
+                    Enabled = model.Enabled,
+                    DownloadLinks = model.DownloadLinks.Select(link => new ModelDownloadLink
+                    {
+                        Id = link.Id,
+                        Url = link.Url,
+                        VramProfile = link.VramProfile,
+                        Destination = link.Destination,
+                        Enabled = link.Enabled
+                    }).ToList()
+                };
+
+                var dialog = new ModelEditorDialog(draft, vramEnabled, availableVramProfiles, isNew: false);
+                var result = await dialog.ShowDialog<ModelDownload?>(_window);
+                if (result is null)
+                {
+                    return null;
+                }
+
+                result.Id = model.Id;
                 return result;
             }
         }

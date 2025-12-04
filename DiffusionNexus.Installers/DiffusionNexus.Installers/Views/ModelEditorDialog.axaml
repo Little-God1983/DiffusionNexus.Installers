@@ -1,0 +1,141 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:DiffusionNexus.Installers.Views"
+        x:Class="DiffusionNexus.Installers.Views.ModelEditorDialog"
+        Width="700"
+        MaxWidth="700"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
+        <!-- Model Name and General Settings -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Model Name" />
+                <TextBox x:Name="NameTextBox" Watermark="Enter model name" MinWidth="640" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+                <TextBlock Text="Default Destination (optional)" />
+                <TextBox x:Name="DestinationTextBox" Watermark="Leave empty to use default model directory" MinWidth="640" />
+            </StackPanel>
+            <CheckBox x:Name="EnabledCheckBox"
+                      Content="Enabled"
+                      IsChecked="True" />
+        </StackPanel>
+
+        <!-- VRAM Settings Info -->
+        <Border Grid.Row="1" 
+                x:Name="VramInfoBorder"
+                Padding="12" 
+                Background="#FFF3CD" 
+                BorderBrush="#856404" 
+                BorderThickness="1" 
+                CornerRadius="4"
+                IsVisible="False">
+            <TextBlock x:Name="VramInfoTextBlock" 
+                       Text="VRAM Settings are disabled. Download links will not require VRAM profiles." 
+                       Foreground="#856404" 
+                       TextWrapping="Wrap"/>
+        </Border>
+
+        <!-- Download Links Section -->
+        <StackPanel Grid.Row="2" Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Download Links" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Button Content="+ Add Link" 
+                        Click="OnAddLinkClick" 
+                        Padding="8,4" 
+                        Background="LightGreen"/>
+            </StackPanel>
+            
+            <Border BorderBrush="Gray" 
+                    BorderThickness="1" 
+                    CornerRadius="4" 
+                    MaxHeight="300">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="DownloadLinksItemsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="views:DownloadLinkViewModel">
+                                <Border Padding="12" 
+                                        Margin="4" 
+                                        Background="WhiteSmoke" 
+                                        BorderBrush="LightGray" 
+                                        BorderThickness="1" 
+                                        CornerRadius="4">
+                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                        <!-- URL -->
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Download URL" FontSize="12" />
+                                            <TextBox Text="{Binding Url}" 
+                                                     Watermark="https://example.com/model.safetensors" 
+                                                     MinWidth="500"/>
+                                        </StackPanel>
+
+                                        <!-- VRAM Profile -->
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="VRAM Profile (optional)" FontSize="12" />
+                                            <ComboBox ItemsSource="{Binding AvailableVramProfiles}" 
+                                                      SelectedItem="{Binding SelectedVramProfile}"
+                                                      MinWidth="200"
+                                                      IsEnabled="{Binding VramEnabled}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <!-- Destination Override -->
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Destination Override (optional)" FontSize="12" />
+                                            <TextBox Text="{Binding Destination}" 
+                                                     Watermark="Leave empty to use model default" 
+                                                     MinWidth="500"/>
+                                        </StackPanel>
+
+                                        <!-- Actions -->
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" 
+                                                    Spacing="8" 
+                                                    VerticalAlignment="Center" 
+                                                    Margin="8,0,0,0">
+                                            <CheckBox Content="Enabled" 
+                                                      IsChecked="{Binding Enabled}" 
+                                                      VerticalAlignment="Center"/>
+                                            <Button Content="???" 
+                                                    Click="OnRemoveLinkClick" 
+                                                    Tag="{Binding}" 
+                                                    Background="LightCoral" 
+                                                    Padding="8,4"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
+
+        <!-- Validation Message -->
+        <TextBlock x:Name="ValidationMessage"
+                   Grid.Row="3"
+                   Foreground="Red"
+                   FontSize="12"
+                   TextWrapping="Wrap" />
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8">
+            <Button Content="Cancel"
+                    Click="OnCancelClick" 
+                    Padding="12,8"/>
+            <Button Content="Save"
+                    IsDefault="True"
+                    Click="OnSaveClick" 
+                    Padding="12,8"/>
+        </StackPanel>
+    </Grid>
+</Window>
