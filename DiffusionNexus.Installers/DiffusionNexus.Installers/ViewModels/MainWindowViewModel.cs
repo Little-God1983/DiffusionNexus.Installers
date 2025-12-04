@@ -36,6 +36,11 @@ namespace DiffusionNexus.Installers.ViewModels
         Task<string?> PromptForNameAsync(string currentName, Guid? excludeId);
     }
 
+    public interface IConfigurationManagementService
+    {
+        Task<bool> ConfirmDeleteAsync(string configurationName);
+    }
+
     public partial class MainWindowViewModel : ViewModelBase
     {
         private readonly ConfigurationService _configurationService = new();
@@ -48,6 +53,7 @@ namespace DiffusionNexus.Installers.ViewModels
         private IGitRepositoryInteractionService? _gitRepositoryInteraction;
         private IConflictResolutionService? _conflictResolution;
         private IConfigurationNameService? _nameService;
+        private IConfigurationManagementService? _configurationManagement;
 
         public event EventHandler<GitRepositoryItemViewModel>? EditRepositoryRequested;
 
@@ -350,6 +356,11 @@ namespace DiffusionNexus.Installers.ViewModels
         public void AttachConfigurationNameService(IConfigurationNameService nameService)
         {
             _nameService = nameService;
+        }
+
+        public void AttachConfigurationManagementService(IConfigurationManagementService configurationManagement)
+        {
+            _configurationManagement = configurationManagement;
         }
 
         [RelayCommand]
@@ -952,6 +963,80 @@ namespace DiffusionNexus.Installers.ViewModels
 
             await LoadSavedConfigurationsAsync();
             ValidationSummary = $"Configuration '{_configuration.Name}' saved successfully.";
+        }
+
+        [RelayCommand]
+        private async Task RenameConfigurationAsync(CancellationToken cancellationToken)
+        {
+            if (SelectedSavedConfiguration is null)
+            {
+                ValidationSummary = "No configuration selected to rename.";
+                return;
+            }
+
+            if (_nameService is null)
+            {
+                ValidationSummary = "Name service not available.";
+                return;
+            }
+
+            var configuration = await _configurationRepository.GetByIdAsync(SelectedSavedConfiguration.Id, cancellationToken);
+            if (configuration is null)
+            {
+                ValidationSummary = "Configuration not found.";
+                return;
+            }
+
+            var newName = await _nameService.PromptForNameAsync(configuration.Name, configuration.Id);
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                return;
+            }
+
+            configuration.Name = newName;
+            await _configurationRepository.SaveAsync(configuration, cancellationToken);
+            await LoadSavedConfigurationsAsync();
+
+            if (_configuration.Id == configuration.Id)
+            {
+                _configuration.Name = newName;
+            }
+
+            ValidationSummary = $"Configuration renamed to '{newName}' successfully.";
+        }
+
+        [RelayCommand]
+        private async Task DeleteConfigurationAsync(CancellationToken cancellationToken)
+        {
+            if (SelectedSavedConfiguration is null)
+            {
+                ValidationSummary = "No configuration selected to delete.";
+                return;
+            }
+
+            if (_configurationManagement is null)
+            {
+                ValidationSummary = "Configuration management service not available.";
+                return;
+            }
+
+            var configName = SelectedSavedConfiguration.Name;
+            var confirmed = await _configurationManagement.ConfirmDeleteAsync(configName);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            var configIdToDelete = SelectedSavedConfiguration.Id;
+            await _configurationRepository.DeleteAsync(configIdToDelete, cancellationToken);
+            await LoadSavedConfigurationsAsync();
+
+            if (_configuration.Id == configIdToDelete)
+            {
+                NewConfiguration();
+            }
+
+            ValidationSummary = $"Configuration '{configName}' deleted successfully.";
         }
     }
 

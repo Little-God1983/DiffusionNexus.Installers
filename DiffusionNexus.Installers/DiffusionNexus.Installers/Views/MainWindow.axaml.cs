@@ -26,6 +26,7 @@ namespace DiffusionNexus.Installers.Views
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
                 vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(this));
                 vm.AttachConfigurationNameService(new AvaloniaConfigurationNameService(this, vm));
+                vm.AttachConfigurationManagementService(new AvaloniaConfigurationManagementService(this));
             }
         }
 
@@ -203,6 +204,72 @@ namespace DiffusionNexus.Installers.Views
                     });
                 
                 var result = await dialog.ShowDialog<string?>(_window);
+                return result;
+            }
+        }
+
+        private sealed class AvaloniaConfigurationManagementService : IConfigurationManagementService
+        {
+            private readonly Window _window;
+
+            public AvaloniaConfigurationManagementService(Window window)
+            {
+                _window = window;
+            }
+
+            public async Task<bool> ConfirmDeleteAsync(string configurationName)
+            {
+                var dialog = new Window
+                {
+                    Title = "Confirm Delete",
+                    Width = 400,
+                    SizeToContent = SizeToContent.Height,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    CanResize = false
+                };
+
+                var messageText = new TextBlock
+                {
+                    Text = $"Are you sure you want to delete the configuration '{configurationName}'?\n\nThis action cannot be undone.",
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    Margin = new Avalonia.Thickness(16)
+                };
+
+                var buttonPanel = new StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                    Spacing = 8,
+                    Margin = new Avalonia.Thickness(16, 0, 16, 16)
+                };
+
+                var cancelButton = new Button
+                {
+                    Content = "Cancel",
+                    Width = 100
+                };
+
+                var deleteButton = new Button
+                {
+                    Content = "Delete",
+                    Width = 100,
+                    Background = Avalonia.Media.Brushes.Red,
+                    Foreground = Avalonia.Media.Brushes.White
+                };
+
+                cancelButton.Click += (s, e) => dialog.Close(false);
+                deleteButton.Click += (s, e) => dialog.Close(true);
+
+                buttonPanel.Children.Add(cancelButton);
+                buttonPanel.Children.Add(deleteButton);
+
+                var mainPanel = new StackPanel();
+                mainPanel.Children.Add(messageText);
+                mainPanel.Children.Add(buttonPanel);
+
+                dialog.Content = mainPanel;
+
+                var result = await dialog.ShowDialog<bool>(_window);
                 return result;
             }
         }

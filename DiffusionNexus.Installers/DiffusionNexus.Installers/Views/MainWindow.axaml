@@ -28,6 +28,17 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                        <Button Content="✏️ Rename"
+                                Command="{Binding RenameConfigurationCommand}"
+                                Margin="8,0,0,0"
+                                Padding="8,4"
+                                IsEnabled="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        <Button Content="🗑️ Delete"
+                                Command="{Binding DeleteConfigurationCommand}"
+                                Margin="4,0,0,0"
+                                Padding="8,4"
+                                Background="LightCoral"
+                                IsEnabled="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}" />
                     </StackPanel>
                 </MenuItem.Header>
             </MenuItem>
