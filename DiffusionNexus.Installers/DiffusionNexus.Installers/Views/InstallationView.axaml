@@ -1,0 +1,223 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DiffusionNexus.Installers.ViewModels"
+             x:Class="DiffusionNexus.Installers.Views.InstallationView"
+             x:DataType="vm:InstallationViewModel">
+
+    <UserControl.Styles>
+        <!-- Gradient Background Style -->
+        <Style Selector="Border.main-container">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#1a1a2e" Offset="0"/>
+                        <GradientStop Color="#16213e" Offset="0.5"/>
+                        <GradientStop Color="#0f3460" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Card Style -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="BoxShadow" Value="0 4 20 0 #40000000"/>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style Selector="Button.primary-btn">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#667eea" Offset="0"/>
+                        <GradientStop Color="#764ba2" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Padding" Value="40,16"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.primary-btn:pointerover">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#764ba2" Offset="0"/>
+                        <GradientStop Color="#667eea" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.primary-btn:disabled">
+            <Setter Property="Background" Value="#555577"/>
+            <Setter Property="Foreground" Value="#888888"/>
+        </Style>
+
+        <!-- Browse Button Style -->
+        <Style Selector="Button.browse-btn">
+            <Setter Property="Background" Value="#4a4a6a"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.browse-btn:pointerover">
+            <Setter Property="Background" Value="#5a5a7a"/>
+        </Style>
+
+        <!-- Log Box Style -->
+        <Style Selector="ListBox.log-box">
+            <Setter Property="Background" Value="#1a1a2a"/>
+            <Setter Property="BorderBrush" Value="#3a3a5a"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <!-- Progress Bar Style -->
+        <Style Selector="ProgressBar.styled-progress">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#00c6ff" Offset="0"/>
+                        <GradientStop Color="#0072ff" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="main-container">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="40" Spacing="30" MaxWidth="900" HorizontalAlignment="Center">
+
+                <!-- Banner Image -->
+                <Border CornerRadius="16"
+                        ClipToBounds="True"
+                        BoxShadow="0 8 30 0 #60000000"
+                        HorizontalAlignment="Center">
+                    <Image Source="avares://DiffusionNexus.Installers/Assets/Banner-cut.png"
+                           MaxHeight="200"
+                           Stretch="Uniform"/>
+                </Border>
+
+                <!-- Welcome Title -->
+                <StackPanel HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="Welcome to"
+                               FontSize="20"
+                               Foreground="#aaaacc"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="AIKnowledge2Go ComfyUI Installer"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                <GradientStop Color="#667eea" Offset="0"/>
+                                <GradientStop Color="#764ba2" Offset="0.5"/>
+                                <GradientStop Color="#00c6ff" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Folder Picker Card -->
+                <Border Classes="card">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="?? Target Installation Folder"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"/>
+                        <TextBlock Text="Select the folder where ComfyUI will be installed"
+                                   FontSize="14"
+                                   Foreground="#8888aa"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding TargetInstallFolder}"
+                                     Watermark="Click Browse to select a folder..."
+                                     Background="#1a1a2a"
+                                     Foreground="White"
+                                     BorderBrush="#3a3a5a"
+                                     CornerRadius="6"
+                                     Padding="12,10"
+                                     FontSize="14"/>
+                            <Button Grid.Column="1"
+                                    Classes="browse-btn"
+                                    Content="?? Browse"
+                                    Command="{Binding BrowseTargetFolderCommand}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Progress Section -->
+                <Border Classes="card">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="?? Installation Progress"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding StatusMessage}"
+                                       FontSize="14"
+                                       Foreground="#aaaacc"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                        <ProgressBar Classes="styled-progress"
+                                     Value="{Binding ProgressValue}"
+                                     Maximum="{Binding ProgressMaximum}"
+                                     ShowProgressText="True"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Log Box Card -->
+                <Border Classes="card" MinHeight="250">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,12">
+                            <TextBlock Text="?? Installation Log"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Real-time installation progress and messages"
+                                       FontSize="14"
+                                       Foreground="#8888aa"/>
+                        </StackPanel>
+                        <ListBox Classes="log-box"
+                                 ItemsSource="{Binding LogEntries}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 SelectionMode="Single">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Display}"
+                                               Foreground="{Binding ForegroundBrush}"
+                                               FontFamily="Consolas, Courier New, monospace"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"
+                                               Padding="8,4"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- Start Button -->
+                <Button Classes="primary-btn"
+                        Content="?? Start Installation"
+                        Command="{Binding StartInstallationCommand}"
+                        HorizontalAlignment="Center"
+                        Margin="0,10,0,40"/>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

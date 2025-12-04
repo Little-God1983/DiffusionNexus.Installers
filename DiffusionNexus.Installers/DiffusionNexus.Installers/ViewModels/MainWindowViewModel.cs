@@ -71,6 +71,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public event EventHandler<GitRepositoryItemViewModel>? EditRepositoryRequested;
 
     /// <summary>
+    /// Gets the InstallationViewModel for the Installation tab.
+    /// </summary>
+    public InstallationViewModel InstallationViewModel { get; }
+
+    /// <summary>
     /// Constructor with dependency injection.
     /// </summary>
     public MainWindowViewModel(IConfigurationRepository configurationRepository)
@@ -85,6 +90,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ModelDownloads = [];
         Logs = [];
         SavedConfigurations = [];
+        InstallationViewModel = new InstallationViewModel();
 
         NewConfiguration();
         _ = LoadSavedConfigurationsAsync();
