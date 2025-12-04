@@ -170,11 +170,7 @@
 
                 <!-- Welcome Title -->
                 <StackPanel HorizontalAlignment="Center" Spacing="8">
-                    <TextBlock Text="Welcome to"
-                               FontSize="20"
-                               Foreground="#aaaacc"
-                               HorizontalAlignment="Center"/>
-                    <TextBlock Text="AIKnowledge2Go ComfyUI Installer"
+                    <TextBlock Text="ComfyUI Installer"
                                FontSize="32"
                                FontWeight="Bold"
                                HorizontalAlignment="Center">
@@ -191,7 +187,7 @@
                 <!-- Folder Picker Card -->
                 <Border Classes="card">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="?? Target Installation Folder"
+                        <TextBlock Text="Target Installation Folder"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Foreground="White"/>
@@ -210,7 +206,7 @@
                                      FontSize="14"/>
                             <Button Grid.Column="1"
                                     Classes="browse-btn"
-                                    Content="?? Browse"
+                                    Content="Browse"
                                     Command="{Binding BrowseTargetFolderCommand}"/>
                         </Grid>
                     </StackPanel>
@@ -220,7 +216,7 @@
                 <Border Classes="card">
                     <StackPanel Spacing="16">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="?? Installation Progress"
+                            <TextBlock Text="Installation Progress"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="White"/>
@@ -241,7 +237,7 @@
                 <Border Classes="card" MinHeight="250">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,12">
-                            <TextBlock Text="?? Installation Log"
+                            <TextBlock Text="Installation Log"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="White"/>
@@ -269,7 +265,7 @@
 
                 <!-- Start Button -->
                 <Button Classes="primary-btn"
-                        Content="?? Start Installation"
+                        Content="Start Installation"
                         Command="{Binding StartInstallationCommand}"
                         HorizontalAlignment="Center"
                         Margin="0,10,0,40"/>
