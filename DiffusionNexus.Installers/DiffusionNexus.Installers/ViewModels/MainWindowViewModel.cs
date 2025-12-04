@@ -146,6 +146,13 @@ namespace DiffusionNexus.Installers.ViewModels
                 if (_configuration.Repository.Type != value)
                 {
                     _configuration.Repository.Type = value;
+                    
+                    // Apply ComfyUI-specific defaults
+                    if (value == RepositoryType.ComfyUI)
+                    {
+                        ApplyComfyUIDefaults();
+                    }
+                    
                     OnPropertyChanged();
                     MarkDirty();
                 }
@@ -423,9 +430,11 @@ namespace DiffusionNexus.Installers.ViewModels
                 },
                 Python = new PythonEnvironmentSettings
                 {
-                    PythonVersion = PythonVersions.Last(),
+                    PythonVersion = "3.12",
                     CreateVirtualEnvironment = true,
-                    VirtualEnvironmentName = "venv"
+                    VirtualEnvironmentName = "venv",
+                    InstallSageAttention = true,
+                    InstallTriton = true
                 },
                 Torch = new TorchSettings
                 {
@@ -457,6 +466,19 @@ namespace DiffusionNexus.Installers.ViewModels
             ReloadCollectionsFromConfiguration();
             UpdateCompatibilityHint();
             OnPropertyChanged(string.Empty);
+        }
+
+        private void ApplyComfyUIDefaults()
+        {
+            // Set Python 3.12
+            _configuration.Python.PythonVersion = "3.12";
+            OnPropertyChanged(nameof(SelectedPythonVersion));
+            
+            // Enable Sage Attention (which will auto-enable Triton)
+            _configuration.Python.InstallSageAttention = true;
+            _configuration.Python.InstallTriton = true;
+            OnPropertyChanged(nameof(InstallSageAttention));
+            OnPropertyChanged(nameof(InstallTriton));
         }
 
         [RelayCommand]
