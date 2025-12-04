@@ -31,6 +31,11 @@ namespace DiffusionNexus.Installers.ViewModels
         Task<SaveConflictResolution> ResolveSaveConflictAsync(string configurationName);
     }
 
+    public interface IConfigurationNameService
+    {
+        Task<string?> PromptForNameAsync(string currentName, Guid? excludeId);
+    }
+
     public partial class MainWindowViewModel : ViewModelBase
     {
         private readonly ConfigurationService _configurationService = new();
@@ -42,6 +47,7 @@ namespace DiffusionNexus.Installers.ViewModels
         private IStorageInteractionService? _storageInteraction;
         private IGitRepositoryInteractionService? _gitRepositoryInteraction;
         private IConflictResolutionService? _conflictResolution;
+        private IConfigurationNameService? _nameService;
 
         public event EventHandler<GitRepositoryItemViewModel>? EditRepositoryRequested;
 
@@ -339,6 +345,11 @@ namespace DiffusionNexus.Installers.ViewModels
         public void AttachConflictResolutionService(IConflictResolutionService conflictResolution)
         {
             _conflictResolution = conflictResolution;
+        }
+
+        public void AttachConfigurationNameService(IConfigurationNameService nameService)
+        {
+            _nameService = nameService;
         }
 
         [RelayCommand]
@@ -892,17 +903,31 @@ namespace DiffusionNexus.Installers.ViewModels
                 return;
             }
 
+            if (_nameService is null || _conflictResolution is null)
+            {
+                ValidationSummary = "Name service or conflict resolution service not available.";
+                return;
+            }
+
+            // Check if this is a new configuration (never saved to DB)
+            var isNew = !await _configurationRepository.ExistsAsync(_configuration.Id, cancellationToken);
+
+            // Always prompt for name to ensure it's unique
+            var newName = await _nameService.PromptForNameAsync(_configuration.Name, _configuration.Id);
+            
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                // User cancelled
+                return;
+            }
+
+            _configuration.Name = newName;
             ValidationSummary = summary;
 
             var exists = await _configurationRepository.ExistsAsync(_configuration.Id, cancellationToken);
 
-            if (exists)
+            if (exists && !isNew)
             {
-                if (_conflictResolution is null)
-                {
-                    return;
-                }
-
                 var resolution = await _conflictResolution.ResolveSaveConflictAsync(_configuration.Name);
 
                 switch (resolution)
@@ -916,6 +941,7 @@ namespace DiffusionNexus.Installers.ViewModels
                     
                     case SaveConflictResolution.SaveAsNew:
                         _configuration = await _configurationRepository.SaveAsNewAsync(_configuration, cancellationToken);
+                        ReloadCollectionsFromConfiguration();
                         break;
                 }
             }
@@ -925,6 +951,7 @@ namespace DiffusionNexus.Installers.ViewModels
             }
 
             await LoadSavedConfigurationsAsync();
+            ValidationSummary = $"Configuration '{_configuration.Name}' saved successfully.";
         }
     }
 

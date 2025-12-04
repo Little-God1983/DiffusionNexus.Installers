@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DiffusionNexus.Installers.Views.ConfigurationNameDialog"
+        x:CompileBindings="False"
+        Title="Configuration Name"
+        Width="450"
+        Height="180"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    
+    <StackPanel Margin="20" Spacing="15">
+        <TextBlock Text="Enter a name for this configuration:" 
+                   FontSize="14" 
+                   FontWeight="SemiBold"/>
+        
+        <TextBox x:Name="NameTextBox"
+                 Watermark="Configuration name"
+                 FontSize="14"
+                 Padding="8"/>
+        
+        <TextBlock x:Name="ErrorTextBlock"
+                   Foreground="Red"
+                   FontSize="12"
+                   IsVisible="False"
+                   TextWrapping="Wrap"/>
+        
+        <StackPanel Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Spacing="10">
+            <Button Content="Cancel" 
+                    Width="100"
+                    Click="OnCancelClick"
+                    Padding="10,6"/>
+            
+            <Button Content="OK"
+                    Width="100"
+                    Click="OnOkClick"
+                    Padding="10,6"
+                    Classes="accent"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

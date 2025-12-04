@@ -14,6 +14,8 @@ namespace DiffusionNexus.DataAccess
             var folder = Environment.SpecialFolder.LocalApplicationData;
             var path = Environment.GetFolderPath(folder);
             DbPath = System.IO.Path.Join(path, "diffusion_nexus.db");
+            
+            Database.EnsureCreated();
         }
 
         // The following configures EF to create a Sqlite database file in the
@@ -28,6 +30,8 @@ namespace DiffusionNexus.DataAccess
             modelBuilder.Entity<InstallationConfiguration>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                
+                entity.HasIndex(e => e.Name).IsUnique();
 
                 // Configure owned types (complex types that don't need their own tables)
                 entity.OwnsOne(e => e.Repository, navigation =>

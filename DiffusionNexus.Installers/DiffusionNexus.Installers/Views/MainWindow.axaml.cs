@@ -25,6 +25,7 @@ namespace DiffusionNexus.Installers.Views
                 vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(this));
                 vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(this));
                 vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(this));
+                vm.AttachConfigurationNameService(new AvaloniaConfigurationNameService(this, vm));
             }
         }
 
@@ -172,6 +173,36 @@ namespace DiffusionNexus.Installers.Views
             {
                 var dialog = new SaveConflictDialog(configurationName);
                 var result = await dialog.ShowDialog<SaveConflictResolution>(_window);
+                return result;
+            }
+        }
+
+        private sealed class AvaloniaConfigurationNameService : IConfigurationNameService
+        {
+            private readonly Window _window;
+            private readonly MainWindowViewModel _viewModel;
+
+            public AvaloniaConfigurationNameService(Window window, MainWindowViewModel viewModel)
+            {
+                _window = window;
+                _viewModel = viewModel;
+            }
+
+            public async Task<string?> PromptForNameAsync(string currentName, Guid? excludeId)
+            {
+                var dialog = new ConfigurationNameDialog(
+                    currentName, 
+                    excludeId,
+                    async (name, excludeGuid) =>
+                    {
+                        // Use the repository from the view model's context
+                        var context = new DiffusionNexus.DataAccess.DiffusionNexusContext(
+                            new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<DiffusionNexus.DataAccess.DiffusionNexusContext>().Options);
+                        var repo = new DiffusionNexus.DataAccess.ConfigurationRepository(context);
+                        return await repo.NameExistsAsync(name, excludeGuid);
+                    });
+                
+                var result = await dialog.ShowDialog<string?>(_window);
                 return result;
             }
         }
