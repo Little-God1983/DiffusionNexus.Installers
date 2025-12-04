@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using DiffusionNexus.Core.Models;
 using DiffusionNexus.Installers.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiffusionNexus.Installers.Views
 {
@@ -247,10 +248,8 @@ namespace DiffusionNexus.Installers.Views
                     excludeId,
                     async (name, excludeGuid) =>
                     {
-                        // Use the repository from the view model's context
-                        var context = new DiffusionNexus.DataAccess.DiffusionNexusContext(
-                            new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<DiffusionNexus.DataAccess.DiffusionNexusContext>().Options);
-                        var repo = new DiffusionNexus.DataAccess.ConfigurationRepository(context);
+                        // Use the repository from DI instead of creating an unconfigured context
+                        var repo = App.Services.GetRequiredService<DiffusionNexus.DataAccess.IConfigurationRepository>();
                         return await repo.NameExistsAsync(name, excludeGuid);
                     });
                 

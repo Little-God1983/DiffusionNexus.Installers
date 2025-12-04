@@ -1,16 +1,25 @@
+using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using DiffusionNexus.DataAccess;
 using DiffusionNexus.Installers.ViewModels;
 using DiffusionNexus.Installers.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DiffusionNexus.Installers
 {
     public partial class App : Application
     {
+        private ServiceProvider? _serviceProvider;
+
+        /// <summary>
+        /// Gets the service provider for resolving dependencies.
+        /// </summary>
+        public static IServiceProvider Services { get; private set; } = null!;
+
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -18,21 +27,45 @@ namespace DiffusionNexus.Installers
 
         public override void OnFrameworkInitializationCompleted()
         {
+            // Configure DI container
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            _serviceProvider = services.BuildServiceProvider();
+            Services = _serviceProvider;
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-                // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
+
+                // Resolve MainWindowViewModel from DI
+                var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = new MainWindowViewModel(),
+                    DataContext = viewModel
                 };
+
+                desktop.ShutdownRequested += OnShutdownRequested;
             }
 
             base.OnFrameworkInitializationCompleted();
         }
 
-        private void DisableAvaloniaDataAnnotationValidation()
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            // Register data access layer
+            services.AddDiffusionNexusDataAccess();
+
+            // Register ViewModels
+            services.AddTransient<MainWindowViewModel>();
+        }
+
+        private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+        {
+            _serviceProvider?.Dispose();
+        }
+
+        private static void DisableAvaloniaDataAnnotationValidation()
         {
             // Get an array of plugins to remove
             var dataValidationPluginsToRemove =
