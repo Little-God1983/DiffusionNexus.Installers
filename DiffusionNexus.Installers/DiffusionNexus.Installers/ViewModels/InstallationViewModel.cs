@@ -29,9 +29,13 @@ public partial class InstallationViewModel : ViewModelBase
     {
         LogEntries = [];
         AvailableVramProfiles = [];
+        AvailableInstallationTypes = [];
         
         // Initialize with default VRAM profiles from shared constants
         SetAvailableVramProfiles(VramProfileConstants.DefaultProfiles);
+        
+        // Initialize installation types
+        InitializeInstallationTypes();
     }
 
     /// <summary>
@@ -61,9 +65,14 @@ public partial class InstallationViewModel : ViewModelBase
     [ObservableProperty]
     private int _selectedVramProfile = VramProfileConstants.DefaultSelectedProfile;
 
+    [ObservableProperty]
+    private InstallationType _selectedInstallationType = InstallationType.FullInstall;
+
     public ObservableCollection<InstallationLogEntry> LogEntries { get; }
 
     public ObservableCollection<VramProfileOption> AvailableVramProfiles { get; }
+
+    public ObservableCollection<InstallationTypeOption> AvailableInstallationTypes { get; }
 
     #endregion
 
@@ -93,6 +102,43 @@ public partial class InstallationViewModel : ViewModelBase
         }
         
         AddLogEntry($"VRAM profile set to {value} GB", LogEntryLevel.Info);
+    }
+
+    #endregion
+
+    #region Installation Type Methods
+
+    /// <summary>
+    /// Initializes the list of available installation types.
+    /// </summary>
+    private void InitializeInstallationTypes()
+    {
+        AvailableInstallationTypes.Clear();
+
+        AvailableInstallationTypes.Add(new InstallationTypeOption(
+            InstallationType.FullInstall, 
+            "Full Install", 
+            true, 
+            SelectInstallationType));
+        AvailableInstallationTypes.Add(new InstallationTypeOption(
+            InstallationType.ModelsNodesOnly, 
+            "Models/Nodes Only", 
+            false, 
+            SelectInstallationType));
+    }
+
+    private void SelectInstallationType(InstallationType type)
+    {
+        SelectedInstallationType = type;
+        
+        // Update all options without triggering callbacks to prevent infinite loop
+        foreach (var option in AvailableInstallationTypes)
+        {
+            option.SetSelectedWithoutCallback(option.Type == type);
+        }
+        
+        var displayName = type == InstallationType.FullInstall ? "Full Install" : "Models/Nodes Only";
+        AddLogEntry($"Installation type set to {displayName}", LogEntryLevel.Info);
     }
 
     #endregion
@@ -130,6 +176,7 @@ public partial class InstallationViewModel : ViewModelBase
             AddLogEntry("Installation started", LogEntryLevel.Info);
             AddLogEntry($"Target folder: {TargetInstallFolder}", LogEntryLevel.Info);
             AddLogEntry($"VRAM Profile: {SelectedVramProfile} GB", LogEntryLevel.Info);
+            AddLogEntry($"Installation Type: {SelectedInstallationType}", LogEntryLevel.Info);
 
             // Placeholder for actual installation logic
             for (var i = 0; i <= 100; i += 10)
@@ -211,6 +258,57 @@ public partial class InstallationViewModel : ViewModelBase
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents the type of installation to perform.
+/// </summary>
+public enum InstallationType
+{
+    FullInstall,
+    ModelsNodesOnly
+}
+
+/// <summary>
+/// Represents an installation type option for selection.
+/// </summary>
+public partial class InstallationTypeOption : ObservableObject
+{
+    private readonly Action<InstallationType>? _onSelected;
+    private bool _suppressCallback;
+
+    public InstallationTypeOption(InstallationType type, string displayName, bool isSelected = false, Action<InstallationType>? onSelected = null)
+    {
+        Type = type;
+        DisplayName = displayName;
+        _isSelected = isSelected;
+        _onSelected = onSelected;
+    }
+
+    public InstallationType Type { get; }
+    
+    public string DisplayName { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        if (!_suppressCallback && value)
+        {
+            _onSelected?.Invoke(Type);
+        }
+    }
+
+    /// <summary>
+    /// Sets the selected state without triggering the callback.
+    /// </summary>
+    public void SetSelectedWithoutCallback(bool selected)
+    {
+        _suppressCallback = true;
+        IsSelected = selected;
+        _suppressCallback = false;
+    }
 }
 
 /// <summary>

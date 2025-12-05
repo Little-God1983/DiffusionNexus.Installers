@@ -276,6 +276,37 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Installation Type Card -->
+                <Border Classes="card">
+                    <StackPanel Spacing="16">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Installation Type"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Choose what to install"
+                                       FontSize="14"
+                                       Foreground="#8888aa"/>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding AvailableInstallationTypes}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" 
+                                               HorizontalAlignment="Center"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:InstallationTypeOption">
+                                    <ToggleButton Classes="vram-toggle"
+                                                  Content="{Binding DisplayName}"
+                                                  IsChecked="{Binding IsSelected}"
+                                                  Margin="4"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <!-- Progress Section -->
                 <Border Classes="card">
                     <StackPanel Spacing="16">
