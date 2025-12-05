@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -23,6 +24,64 @@ public interface IFolderPickerService
 }
 
 /// <summary>
+/// Service interface for user prompts and dialogs.
+/// </summary>
+public interface IUserPromptService
+{
+    /// <summary>
+    /// Shows a confirmation dialog with Yes/No options.
+    /// </summary>
+    /// <param name="title">Dialog title.</param>
+    /// <param name="message">Message to display.</param>
+    /// <param name="yesButtonText">Text for the Yes button.</param>
+    /// <param name="noButtonText">Text for the No button.</param>
+    /// <returns>True if user clicked Yes, false otherwise.</returns>
+    Task<bool> ConfirmAsync(string title, string message, string yesButtonText = "Yes", string noButtonText = "No");
+
+    /// <summary>
+    /// Shows an error message dialog.
+    /// </summary>
+    /// <param name="title">Dialog title.</param>
+    /// <param name="message">Error message to display.</param>
+    Task ShowErrorAsync(string title, string message);
+
+    /// <summary>
+    /// Shows an information message dialog.
+    /// </summary>
+    /// <param name="title">Dialog title.</param>
+    /// <param name="message">Message to display.</param>
+    Task ShowInfoAsync(string title, string message);
+}
+
+/// <summary>
+/// Result of pre-installation validation.
+/// </summary>
+public enum PreInstallationCheckResult
+{
+    /// <summary>
+    /// Installation can proceed without issues.
+    /// </summary>
+    CanProceed,
+
+    /// <summary>
+    /// Target folder is not empty but configuration has models/nodes to install.
+    /// User should be asked if they want to switch to Models/Nodes only mode.
+    /// </summary>
+    SuggestModelsNodesOnly,
+
+    /// <summary>
+    /// Target folder is not empty and no models/nodes are configured.
+    /// Installation cannot proceed.
+    /// </summary>
+    TargetFolderNotEmpty,
+
+    /// <summary>
+    /// Installation was cancelled by user.
+    /// </summary>
+    Cancelled
+}
+
+/// <summary>
 /// ViewModel for the Installation tab.
 /// </summary>
 public partial class InstallationViewModel : ViewModelBase
@@ -30,6 +89,7 @@ public partial class InstallationViewModel : ViewModelBase
     private readonly IConfigurationRepository? _configurationRepository;
     private readonly InstallationEngine? _installationEngine;
     private IFolderPickerService? _folderPickerService;
+    private IUserPromptService? _userPromptService;
     private InstallationConfiguration? _selectedConfiguration;
 
     /// <summary>
@@ -71,6 +131,12 @@ public partial class InstallationViewModel : ViewModelBase
     /// </summary>
     public void AttachFolderPickerService(IFolderPickerService folderPickerService) =>
         _folderPickerService = folderPickerService;
+
+    /// <summary>
+    /// Attaches the user prompt service for dialogs and confirmations.
+    /// </summary>
+    public void AttachUserPromptService(IUserPromptService userPromptService) =>
+        _userPromptService = userPromptService;
 
     #region Observable Properties
 
@@ -275,92 +341,107 @@ public partial class InstallationViewModel : ViewModelBase
 
         IsInstalling = true;
         ProgressValue = 0;
-        StatusMessage = "Starting installation...";
+        StatusMessage = "Running pre-installation checks...";
         LogEntries.Clear();
         StartInstallationCommand.NotifyCanExecuteChanged();
 
         try
         {
-            AddLogEntry("Installation started", LogEntryLevel.Info);
+            AddLogEntry("Running pre-installation checks...", LogEntryLevel.Info);
+
+            // Check if configuration is selected
+            if (_selectedConfiguration is null)
+            {
+                AddLogEntry("No configuration selected. Please select a configuration to install.", LogEntryLevel.Warning);
+                StatusMessage = "No configuration selected";
+                return;
+            }
+
+            // Check if installation engine is available
+            if (_installationEngine is null)
+            {
+                AddLogEntry("Installation engine not available.", LogEntryLevel.Error);
+                StatusMessage = "Installation engine not available";
+                return;
+            }
+
+            // Run pre-installation validation
+            var preCheckResult = await RunPreInstallationChecksAsync(cancellationToken);
+            
+            if (preCheckResult == PreInstallationCheckResult.Cancelled)
+            {
+                AddLogEntry("Installation cancelled by user.", LogEntryLevel.Warning);
+                StatusMessage = "Installation cancelled";
+                return;
+            }
+
+            if (preCheckResult == PreInstallationCheckResult.TargetFolderNotEmpty)
+            {
+                // Error was already shown to user
+                StatusMessage = "Installation cannot proceed";
+                return;
+            }
+
+            // Proceed with installation
+            StatusMessage = "Starting installation...";
+            AddLogEntry("Pre-installation checks passed.", LogEntryLevel.Success);
             AddLogEntry($"Target folder: {TargetInstallFolder}", LogEntryLevel.Info);
             AddLogEntry($"VRAM Profile: {SelectedVramProfile} GB", LogEntryLevel.Info);
             AddLogEntry($"Installation Type: {SelectedInstallationType}", LogEntryLevel.Info);
-            
-            if (_selectedConfiguration is not null)
+            AddLogEntry($"Using configuration: {_selectedConfiguration.Name}", LogEntryLevel.Info);
+
+            // Update the configuration's paths with the UI-selected target folder
+            _selectedConfiguration.Paths.RootDirectory = TargetInstallFolder;
+
+            // Create progress reporters
+            var logProgress = new Progress<InstallLogEntry>(entry =>
             {
-                AddLogEntry($"Using configuration: {_selectedConfiguration.Name}", LogEntryLevel.Info);
-            }
+                // Map Core.Models.LogLevel to ViewModels.LogEntryLevel
+                var level = entry.Level switch
+                {
+                    Core.Models.LogLevel.Success => LogEntryLevel.Success,
+                    Core.Models.LogLevel.Warning => LogEntryLevel.Warning,
+                    Core.Models.LogLevel.Error => LogEntryLevel.Error,
+                    Core.Models.LogLevel.Critical => LogEntryLevel.Error,
+                    _ => LogEntryLevel.Info
+                };
+                AddLogEntry(entry.Message, level);
+            });
 
-            // Use the installation engine if available
-            if (_installationEngine is not null && _selectedConfiguration is not null)
+            var stepProgress = new Progress<InstallationProgress>(progress =>
             {
-                // Update the configuration's paths with the UI-selected target folder
-                _selectedConfiguration.Paths.RootDirectory = TargetInstallFolder;
+                ProgressValue = progress.ProgressPercentage;
+                StatusMessage = progress.Message;
+            });
 
-                // Create progress reporters
-                var logProgress = new Progress<InstallLogEntry>(entry =>
+            // Run the actual installation
+            var result = await _installationEngine.RunInstallationAsync(
+                _selectedConfiguration,
+                TargetInstallFolder,
+                logProgress,
+                stepProgress,
+                cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                AddLogEntry("Installation completed successfully!", LogEntryLevel.Success);
+                StatusMessage = "Installation completed!";
+                ProgressValue = 100;
+
+                if (!string.IsNullOrWhiteSpace(result.RepositoryPath))
                 {
-                    // Map Core.Models.LogLevel to ViewModels.LogEntryLevel
-                    var level = entry.Level switch
-                    {
-                        Core.Models.LogLevel.Success => LogEntryLevel.Success,
-                        Core.Models.LogLevel.Warning => LogEntryLevel.Warning,
-                        Core.Models.LogLevel.Error => LogEntryLevel.Error,
-                        Core.Models.LogLevel.Critical => LogEntryLevel.Error,
-                        _ => LogEntryLevel.Info
-                    };
-                    AddLogEntry(entry.Message, level);
-                });
-
-                var stepProgress = new Progress<InstallationProgress>(progress =>
-                {
-                    ProgressValue = progress.ProgressPercentage;
-                    StatusMessage = progress.Message;
-                });
-
-                // Run the actual installation
-                var result = await _installationEngine.RunInstallationAsync(
-                    _selectedConfiguration,
-                    TargetInstallFolder,
-                    logProgress,
-                    stepProgress,
-                    cancellationToken);
-
-                if (result.IsSuccess)
-                {
-                    AddLogEntry("Installation completed successfully!", LogEntryLevel.Success);
-                    StatusMessage = "Installation completed!";
-                    ProgressValue = 100;
-
-                    if (!string.IsNullOrWhiteSpace(result.RepositoryPath))
-                    {
-                        AddLogEntry($"Repository: {result.RepositoryPath}", LogEntryLevel.Info);
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(result.VirtualEnvironmentPath))
-                    {
-                        AddLogEntry($"Virtual Environment: {result.VirtualEnvironmentPath}", LogEntryLevel.Info);
-                    }
+                    AddLogEntry($"Repository: {result.RepositoryPath}", LogEntryLevel.Info);
                 }
-                else
+
+                if (!string.IsNullOrWhiteSpace(result.VirtualEnvironmentPath))
                 {
-                    AddLogEntry($"Installation failed: {result.Message}", LogEntryLevel.Error);
-                    StatusMessage = "Installation failed";
+                    AddLogEntry($"Virtual Environment: {result.VirtualEnvironmentPath}", LogEntryLevel.Info);
                 }
             }
             else
             {
-                // Fallback: No configuration selected or no engine
-                if (_selectedConfiguration is null)
-                {
-                    AddLogEntry("No configuration selected. Please select a configuration to install.", LogEntryLevel.Warning);
-                    StatusMessage = "No configuration selected";
-                }
-                else
-                {
-                    AddLogEntry("Installation engine not available.", LogEntryLevel.Error);
-                    StatusMessage = "Installation engine not available";
-                }
+                AddLogEntry($"Installation failed: {result.Message}", LogEntryLevel.Error);
+                StatusMessage = "Installation failed";
             }
         }
         catch (OperationCanceledException)
@@ -377,6 +458,101 @@ public partial class InstallationViewModel : ViewModelBase
         {
             IsInstalling = false;
             StartInstallationCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// Runs pre-installation checks and handles user prompts.
+    /// </summary>
+    private async Task<PreInstallationCheckResult> RunPreInstallationChecksAsync(CancellationToken cancellationToken)
+    {
+        if (_selectedConfiguration is null)
+        {
+            return PreInstallationCheckResult.Cancelled;
+        }
+
+        var isFullInstall = SelectedInstallationType == InstallationType.FullInstall;
+
+        // If not a full install, skip directory checks
+        if (!isFullInstall)
+        {
+            AddLogEntry("Models/Nodes only installation - skipping directory checks.", LogEntryLevel.Info);
+            return PreInstallationCheckResult.CanProceed;
+        }
+
+        // Check the target directory
+        var validator = new PreInstallationValidator();
+        var validationResult = validator.Validate(_selectedConfiguration, TargetInstallFolder, isFullInstall);
+
+        AddLogEntry($"Checking target path: {validationResult.FullTargetPath}", LogEntryLevel.Info);
+
+        if (validationResult.CanProceed)
+        {
+            AddLogEntry("Target directory is available for installation.", LogEntryLevel.Info);
+            return PreInstallationCheckResult.CanProceed;
+        }
+
+        // Target directory exists and is not empty
+        AddLogEntry($"Target directory '{validationResult.FullTargetPath}' exists and is not empty.", LogEntryLevel.Warning);
+
+        if (validationResult.ShouldSuggestModelsNodesOnly)
+        {
+            // Configuration has models and/or custom nodes - ask user if they want to switch
+            var hasModelsText = validationResult.HasModels ? "models" : "";
+            var hasNodesText = validationResult.HasCustomNodes ? "custom nodes" : "";
+            var contentDescription = string.Join(" and ", new[] { hasModelsText, hasNodesText }.Where(s => !string.IsNullOrEmpty(s)));
+
+            var message = $"The target folder '{validationResult.FullTargetPath}' already exists and is not empty.\n\n" +
+                         $"Your configuration includes {contentDescription} to install.\n\n" +
+                         $"Would you like to switch to 'Models/Nodes Only' mode?\n" +
+                         $"This will install only the {contentDescription} and will also update ComfyUI to the latest version.\n\n" +
+                         $"Note: The actual update functionality will be implemented in a future version.";
+
+            if (_userPromptService is not null)
+            {
+                var switchToModelsOnly = await _userPromptService.ConfirmAsync(
+                    "Target Folder Not Empty",
+                    message,
+                    "Switch to Models/Nodes Only",
+                    "Cancel Installation");
+
+                if (switchToModelsOnly)
+                {
+                    // Switch to Models/Nodes only mode
+                    SelectInstallationType(InstallationType.ModelsNodesOnly);
+                    AddLogEntry("Switched to Models/Nodes Only installation mode.", LogEntryLevel.Info);
+                    
+                    // TODO: Implement the actual Models/Nodes only installation
+                    // For now, we'll just return CanProceed but the actual logic will be a future TODO
+                    AddLogEntry("Note: Models/Nodes only mode is not yet fully implemented.", LogEntryLevel.Warning);
+                    return PreInstallationCheckResult.CanProceed;
+                }
+                else
+                {
+                    return PreInstallationCheckResult.Cancelled;
+                }
+            }
+            else
+            {
+                // No prompt service available, log warning and cancel
+                AddLogEntry("Cannot prompt user - installation cancelled.", LogEntryLevel.Warning);
+                return PreInstallationCheckResult.Cancelled;
+            }
+        }
+        else
+        {
+            // No models or custom nodes configured - show error
+            var errorMessage = validationResult.ErrorMessage ?? 
+                $"The target folder '{validationResult.FullTargetPath}' is not empty and no models or custom nodes are configured.";
+
+            AddLogEntry(errorMessage, LogEntryLevel.Error);
+
+            if (_userPromptService is not null)
+            {
+                await _userPromptService.ShowErrorAsync("Cannot Install", errorMessage);
+            }
+
+            return PreInstallationCheckResult.TargetFolderNotEmpty;
         }
     }
 
