@@ -150,46 +150,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="40" Spacing="30" MaxWidth="900" HorizontalAlignment="Center">
 
-                <!-- Social Links Bar -->
-                <Border Classes="card" Padding="16">
-                    <StackPanel Orientation="Horizontal" 
-                                HorizontalAlignment="Center" 
-                                Spacing="16">
-                        <Button Classes="social-btn" 
-                                Command="{Binding OpenYoutubeCommand}"
-                                ToolTip.Tip="Visit our YouTube channel">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Image Source="avares://DiffusionNexus.Installers/Assets/yt.png" 
-                                       Width="24" Height="24"/>
-                                <TextBlock Text="YouTube" 
-                                           VerticalAlignment="Center"
-                                           FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Classes="social-btn" 
-                                Command="{Binding OpenPatreonCommand}"
-                                ToolTip.Tip="Support us on Patreon">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Image Source="avares://DiffusionNexus.Installers/Assets/patreon.png" 
-                                       Width="24" Height="24"/>
-                                <TextBlock Text="Patreon" 
-                                           VerticalAlignment="Center"
-                                           FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Classes="social-btn" 
-                                Command="{Binding OpenCivitaiCommand}"
-                                ToolTip.Tip="Check out our models on Civitai">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Image Source="avares://DiffusionNexus.Installers/Assets/civitai.png" 
-                                       Width="24" Height="24"/>
-                                <TextBlock Text="Civitai" 
-                                           VerticalAlignment="Center"
-                                           FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Border>
+               
 
                 <!-- Banner Image -->
                 <Border CornerRadius="16"
@@ -335,8 +296,55 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
+                 <!-- Social Links Bar -->
+                <Border Classes="card" Padding="16">
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center" 
+                                Spacing="16">
+                        <Button Classes="social-btn" 
+                                Command="{Binding OpenYoutubeCommand}"
+                                ToolTip.Tip="Visit our YouTube channel">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Image Source="avares://DiffusionNexus.Installers/Assets/yt.png" 
+                                       Width="24" Height="24"/>
+                                <TextBlock Text="YouTube" 
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="social-btn" 
+                                Command="{Binding OpenPatreonCommand}"
+                                ToolTip.Tip="Support us on Patreon">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Image Source="avares://DiffusionNexus.Installers/Assets/patreon.png" 
+                                       Width="24" Height="24"/>
+                                <TextBlock Text="Patreon" 
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="social-btn" 
+                                Command="{Binding OpenCivitaiCommand}"
+                                ToolTip.Tip="Check out our models on Civitai">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Image Source="avares://DiffusionNexus.Installers/Assets/civitai.png" 
+                                       Width="24" Height="24"/>
+                                <TextBlock Text="Civitai" 
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+              
+       <!-- Start Button -->
+                <Button Classes="primary-btn"
+                        Content="Start Installation"
+                        Command="{Binding StartInstallationCommand}"
+                        HorizontalAlignment="Center"
+                        Margin="0,10,0,10"/>
 
-                <!-- Progress Section -->
+                  <!-- Progress Section -->
                 <Border Classes="card">
                     <StackPanel Spacing="16">
                         <Grid ColumnDefinitions="*,Auto">
@@ -356,12 +364,6 @@
                                      ShowProgressText="True"/>
                     </StackPanel>
                 </Border>
-       <!-- Start Button -->
-                <Button Classes="primary-btn"
-                        Content="Start Installation"
-                        Command="{Binding StartInstallationCommand}"
-                        HorizontalAlignment="Center"
-                        Margin="0,10,0,10"/>
                 <!-- Log Box Card -->
                 <Border Classes="card" MinHeight="250">
                     <DockPanel>
