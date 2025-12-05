@@ -203,7 +203,7 @@
 
                 <!-- Welcome Title -->
                 <StackPanel HorizontalAlignment="Center" Spacing="8">
-                    <TextBlock Text="ComfyUI Installer"
+                    <TextBlock Text="ComfyUI Workload Installer"
                                FontSize="32"
                                FontWeight="Bold"
                                HorizontalAlignment="Center">
