@@ -7,24 +7,105 @@
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
-    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
+
+    <Window.Styles>
+        <!-- Model Type Toggle Button Style -->
+        <Style Selector="ToggleButton.model-type-toggle">
+            <Setter Property="Background" Value="#e8e8e8"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#cccccc"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style Selector="ToggleButton.model-type-toggle:pointerover">
+            <Setter Property="Background" Value="#d8d8d8"/>
+            <Setter Property="BorderBrush" Value="#667eea"/>
+        </Style>
+
+        <Style Selector="ToggleButton.model-type-toggle:checked">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#667eea" Offset="0"/>
+                        <GradientStop Color="#764ba2" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#764ba2"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="12">
         <!-- Model Name and General Settings -->
         <StackPanel Grid.Row="0" Spacing="8">
             <StackPanel Spacing="4">
                 <TextBlock Text="Model Name" />
                 <TextBox x:Name="NameTextBox" Watermark="Enter model name" MinWidth="640" />
             </StackPanel>
-            <StackPanel Spacing="4">
-                <TextBlock Text="Default Destination (optional)" />
-                <TextBox x:Name="DestinationTextBox" Watermark="Leave empty to use default model directory" MinWidth="640" />
-            </StackPanel>
             <CheckBox x:Name="EnabledCheckBox"
                       Content="Enabled"
                       IsChecked="True" />
         </StackPanel>
 
+        <!-- Model Type / Destination Section -->
+        <StackPanel Grid.Row="1" Spacing="8">
+            <TextBlock Text="Model Destination" FontWeight="SemiBold" />
+            <TextBlock Text="Select a predefined model type or enter a custom destination path" 
+                       FontSize="12" 
+                       Foreground="Gray"/>
+            
+            <!-- Model Type Options -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Model Type" FontSize="12" />
+                <WrapPanel x:Name="ModelTypePanel" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <ToggleButton x:Name="DiffusionModelsToggle" 
+                                  Classes="model-type-toggle"
+                                  Content="Diffusion Models"
+                                  Click="OnModelTypeClick"
+                                  Margin="0,0,8,4"/>
+                    <ToggleButton x:Name="CheckpointToggle" 
+                                  Classes="model-type-toggle"
+                                  Content="Checkpoint"
+                                  Click="OnModelTypeClick"
+                                  Margin="0,0,8,4"/>
+                    <ToggleButton x:Name="TextEncoderToggle" 
+                                  Classes="model-type-toggle"
+                                  Content="Text Encoder"
+                                  Click="OnModelTypeClick"
+                                  Margin="0,0,8,4"/>
+                    <ToggleButton x:Name="LoraToggle" 
+                                  Classes="model-type-toggle"
+                                  Content="Lora"
+                                  Click="OnModelTypeClick"
+                                  Margin="0,0,8,4"/>
+                    <ToggleButton x:Name="VaeToggle" 
+                                  Classes="model-type-toggle"
+                                  Content="Vae"
+                                  Click="OnModelTypeClick"
+                                  Margin="0,0,8,4"/>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Custom Destination Override -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Custom Destination (overrides model type selection)" FontSize="12" />
+                <TextBox x:Name="DestinationTextBox" 
+                         Watermark="Leave empty to use model type default" 
+                         MinWidth="640"
+                         TextChanged="OnDestinationTextChanged"/>
+            </StackPanel>
+        </StackPanel>
+
         <!-- VRAM Settings Info -->
-        <Border Grid.Row="1" 
+        <Border Grid.Row="2" 
                 x:Name="VramInfoBorder"
                 Padding="12" 
                 Background="#FFF3CD" 
@@ -39,7 +120,7 @@
         </Border>
 
         <!-- Download Links Section -->
-        <StackPanel Grid.Row="2" Spacing="8">
+        <StackPanel Grid.Row="3" Spacing="8">
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock Text="Download Links" FontWeight="SemiBold" VerticalAlignment="Center" />
                 <Button Content="+ Add Link" 
@@ -102,7 +183,7 @@
                                             <CheckBox Content="Enabled" 
                                                       IsChecked="{Binding Enabled}" 
                                                       VerticalAlignment="Center"/>
-                                            <Button Content="???" 
+                                            <Button Content="??" 
                                                     Click="OnRemoveLinkClick" 
                                                     Tag="{Binding}" 
                                                     Background="LightCoral" 
@@ -119,13 +200,13 @@
 
         <!-- Validation Message -->
         <TextBlock x:Name="ValidationMessage"
-                   Grid.Row="3"
+                   Grid.Row="4"
                    Foreground="Red"
                    FontSize="12"
                    TextWrapping="Wrap" />
 
         <!-- Action Buttons -->
-        <StackPanel Grid.Row="4"
+        <StackPanel Grid.Row="5"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Spacing="8">

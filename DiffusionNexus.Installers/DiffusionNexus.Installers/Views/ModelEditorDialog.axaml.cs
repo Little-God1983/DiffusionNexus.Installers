@@ -2,12 +2,26 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DiffusionNexus.Core.Models;
 
 namespace DiffusionNexus.Installers.Views
 {
+    /// <summary>
+    /// Represents the predefined model type destinations.
+    /// </summary>
+    public enum ModelType
+    {
+        None,
+        DiffusionModels,
+        Checkpoint,
+        TextEncoder,
+        Lora,
+        Vae
+    }
+
     public partial class ModelEditorDialog : Window
     {
         private readonly ModelDownload _draft;
@@ -21,6 +35,28 @@ namespace DiffusionNexus.Installers.Views
         private readonly Border _vramInfoBorder;
         private readonly ItemsControl _downloadLinksItemsControl;
         private readonly TextBlock _validationMessage;
+
+        // Model type toggle buttons
+        private readonly ToggleButton _diffusionModelsToggle;
+        private readonly ToggleButton _checkpointToggle;
+        private readonly ToggleButton _textEncoderToggle;
+        private readonly ToggleButton _loraToggle;
+        private readonly ToggleButton _vaeToggle;
+
+        private bool _suppressDestinationTextChanged;
+        private ModelType _selectedModelType = ModelType.None;
+
+        /// <summary>
+        /// Maps model types to their default destination paths.
+        /// </summary>
+        private static readonly System.Collections.Generic.Dictionary<ModelType, string> ModelTypeDestinations = new()
+        {
+            { ModelType.DiffusionModels, "models/diffusion_models" },
+            { ModelType.Checkpoint, "models/checkpoints" },
+            { ModelType.TextEncoder, "models/text_encoders" },
+            { ModelType.Lora, "models/loras" },
+            { ModelType.Vae, "models/vae" }
+        };
 
         public ModelEditorDialog()
             : this(new ModelDownload(), false, [], true)
@@ -52,11 +88,25 @@ namespace DiffusionNexus.Installers.Views
             _validationMessage = this.FindControl<TextBlock>("ValidationMessage")
                 ?? throw new InvalidOperationException("ValidationMessage not found");
 
+            // Find model type toggle buttons
+            _diffusionModelsToggle = this.FindControl<ToggleButton>("DiffusionModelsToggle")
+                ?? throw new InvalidOperationException("DiffusionModelsToggle not found");
+            _checkpointToggle = this.FindControl<ToggleButton>("CheckpointToggle")
+                ?? throw new InvalidOperationException("CheckpointToggle not found");
+            _textEncoderToggle = this.FindControl<ToggleButton>("TextEncoderToggle")
+                ?? throw new InvalidOperationException("TextEncoderToggle not found");
+            _loraToggle = this.FindControl<ToggleButton>("LoraToggle")
+                ?? throw new InvalidOperationException("LoraToggle not found");
+            _vaeToggle = this.FindControl<ToggleButton>("VaeToggle")
+                ?? throw new InvalidOperationException("VaeToggle not found");
+
             Title = isNew ? "Add Model" : "Edit Model";
 
             _nameTextBox.Text = draft.Name;
-            _destinationTextBox.Text = draft.Destination;
             _enabledCheckBox.IsChecked = draft.Enabled;
+
+            // Initialize destination - check if it matches a known model type
+            InitializeDestination(draft.Destination);
 
             if (!_vramEnabled)
             {
@@ -73,10 +123,144 @@ namespace DiffusionNexus.Installers.Views
             Opened += OnOpened;
         }
 
+        /// <summary>
+        /// Initializes the destination UI based on the existing destination value.
+        /// </summary>
+        private void InitializeDestination(string destination)
+        {
+            if (string.IsNullOrWhiteSpace(destination))
+            {
+                return;
+            }
+
+            // Check if destination matches a known model type
+            var matchedType = ModelTypeDestinations
+                .FirstOrDefault(kvp => kvp.Value.Equals(destination, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedType.Key != ModelType.None)
+            {
+                // Select the matching model type toggle
+                SelectModelType(matchedType.Key);
+            }
+            else
+            {
+                // Custom destination - show in text box
+                _destinationTextBox.Text = destination;
+            }
+        }
+
+        /// <summary>
+        /// Selects a model type and updates the toggle buttons accordingly.
+        /// </summary>
+        private void SelectModelType(ModelType modelType)
+        {
+            _selectedModelType = modelType;
+
+            // Update all toggle buttons
+            _diffusionModelsToggle.IsChecked = modelType == ModelType.DiffusionModels;
+            _checkpointToggle.IsChecked = modelType == ModelType.Checkpoint;
+            _textEncoderToggle.IsChecked = modelType == ModelType.TextEncoder;
+            _loraToggle.IsChecked = modelType == ModelType.Lora;
+            _vaeToggle.IsChecked = modelType == ModelType.Vae;
+
+            // Clear destination text when a model type is selected
+            if (modelType != ModelType.None)
+            {
+                _suppressDestinationTextChanged = true;
+                _destinationTextBox.Text = string.Empty;
+                _suppressDestinationTextChanged = false;
+            }
+        }
+
+        /// <summary>
+        /// Clears all model type selections.
+        /// </summary>
+        private void ClearModelTypeSelection()
+        {
+            _selectedModelType = ModelType.None;
+            _diffusionModelsToggle.IsChecked = false;
+            _checkpointToggle.IsChecked = false;
+            _textEncoderToggle.IsChecked = false;
+            _loraToggle.IsChecked = false;
+            _vaeToggle.IsChecked = false;
+        }
+
         private void OnOpened(object? sender, EventArgs e)
         {
             _nameTextBox.Focus();
             _nameTextBox.SelectAll();
+        }
+
+        /// <summary>
+        /// Handles model type toggle button clicks for mutual exclusivity.
+        /// </summary>
+        private void OnModelTypeClick(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not ToggleButton clickedToggle)
+            {
+                return;
+            }
+
+            // Determine which model type was clicked
+            ModelType clickedType = clickedToggle.Name switch
+            {
+                "DiffusionModelsToggle" => ModelType.DiffusionModels,
+                "CheckpointToggle" => ModelType.Checkpoint,
+                "TextEncoderToggle" => ModelType.TextEncoder,
+                "LoraToggle" => ModelType.Lora,
+                "VaeToggle" => ModelType.Vae,
+                _ => ModelType.None
+            };
+
+            if (clickedToggle.IsChecked == true)
+            {
+                // Select this type and uncheck others
+                SelectModelType(clickedType);
+            }
+            else
+            {
+                // Toggle was unchecked - clear selection
+                _selectedModelType = ModelType.None;
+            }
+        }
+
+        /// <summary>
+        /// Handles destination text changes to clear model type selection.
+        /// </summary>
+        private void OnDestinationTextChanged(object? sender, TextChangedEventArgs e)
+        {
+            if (_suppressDestinationTextChanged)
+            {
+                return;
+            }
+
+            // When user types in destination, clear model type selection
+            if (!string.IsNullOrEmpty(_destinationTextBox.Text))
+            {
+                ClearModelTypeSelection();
+            }
+        }
+
+        /// <summary>
+        /// Gets the effective destination based on model type selection or custom input.
+        /// </summary>
+        private string GetEffectiveDestination()
+        {
+            // Custom destination takes precedence
+            var customDestination = _destinationTextBox.Text?.Trim() ?? string.Empty;
+            if (!string.IsNullOrEmpty(customDestination))
+            {
+                return customDestination;
+            }
+
+            // Use model type destination if selected
+            if (_selectedModelType != ModelType.None && 
+                ModelTypeDestinations.TryGetValue(_selectedModelType, out var typeDestination))
+            {
+                return typeDestination;
+            }
+
+            return string.Empty;
         }
 
         private void OnAddLinkClick(object? sender, RoutedEventArgs e)
@@ -103,7 +287,7 @@ namespace DiffusionNexus.Installers.Views
         private void OnSaveClick(object? sender, RoutedEventArgs e)
         {
             var name = _nameTextBox.Text?.Trim() ?? string.Empty;
-            var destination = _destinationTextBox.Text?.Trim() ?? string.Empty;
+            var destination = GetEffectiveDestination();
 
             if (string.IsNullOrWhiteSpace(name))
             {
