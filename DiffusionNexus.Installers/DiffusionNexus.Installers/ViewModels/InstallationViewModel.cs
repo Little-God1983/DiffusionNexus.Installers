@@ -30,8 +30,8 @@ public partial class InstallationViewModel : ViewModelBase
         LogEntries = [];
         AvailableVramProfiles = [];
         
-        // Initialize with default VRAM profiles
-        SetAvailableVramProfiles([4, 6, 8, 12, 16, 24, 32, 48, 64]);
+        // Initialize with default VRAM profiles from shared constants
+        SetAvailableVramProfiles(VramProfileConstants.DefaultProfiles);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public partial class InstallationViewModel : ViewModelBase
     private string _statusMessage = "Ready to install";
 
     [ObservableProperty]
-    private int _selectedVramProfile = 8;
+    private int _selectedVramProfile = VramProfileConstants.DefaultSelectedProfile;
 
     public ObservableCollection<InstallationLogEntry> LogEntries { get; }
 
@@ -85,10 +85,13 @@ public partial class InstallationViewModel : ViewModelBase
     private void SelectVramProfile(int value)
     {
         SelectedVramProfile = value;
+        
+        // Update all profiles without triggering callbacks to prevent infinite loop
         foreach (var profile in AvailableVramProfiles)
         {
-            profile.IsSelected = profile.Value == value;
+            profile.SetSelectedWithoutCallback(profile.Value == value);
         }
+        
         AddLogEntry($"VRAM profile set to {value} GB", LogEntryLevel.Info);
     }
 
@@ -216,6 +219,7 @@ public partial class InstallationViewModel : ViewModelBase
 public partial class VramProfileOption : ObservableObject
 {
     private readonly Action<int>? _onSelected;
+    private bool _suppressCallback;
 
     public VramProfileOption(int value, bool isSelected = false, Action<int>? onSelected = null)
     {
@@ -233,10 +237,20 @@ public partial class VramProfileOption : ObservableObject
 
     partial void OnIsSelectedChanged(bool value)
     {
-        if (value)
+        if (!_suppressCallback)
         {
             _onSelected?.Invoke(Value);
         }
+    }
+
+    /// <summary>
+    /// Sets the selected state without triggering the callback.
+    /// </summary>
+    public void SetSelectedWithoutCallback(bool selected)
+    {
+        _suppressCallback = true;
+        IsSelected = selected;
+        _suppressCallback = false;
     }
 }
 

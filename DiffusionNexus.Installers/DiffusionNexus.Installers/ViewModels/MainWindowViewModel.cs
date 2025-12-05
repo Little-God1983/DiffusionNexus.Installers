@@ -90,8 +90,10 @@ public partial class MainWindowViewModel : ViewModelBase
         ModelDownloads = [];
         Logs = [];
         SavedConfigurations = [];
+        AvailableVramProfileOptions = [];
         InstallationViewModel = new InstallationViewModel();
 
+        InitializeVramProfileOptions();
         NewConfiguration();
         _ = LoadSavedConfigurationsAsync();
     }
@@ -102,6 +104,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<ModelDownloadItemViewModel> ModelDownloads { get; }
     public ObservableCollection<InstallLogEntryViewModel> Logs { get; }
     public ObservableCollection<ConfigurationListItemViewModel> SavedConfigurations { get; }
+    public ObservableCollection<VramProfileOption> AvailableVramProfileOptions { get; }
 
     #endregion
 
@@ -1067,6 +1070,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         UpdateRepositoryPriorities();
+        UpdateVramProfileSelectionFromConfiguration();
     }
 
     private void UpdateCompatibilityHint()
@@ -1078,6 +1082,46 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ValidationSummary = string.Empty;
         PreviewPlan = string.Empty;
+    }
+
+    private void InitializeVramProfileOptions()
+    {
+        AvailableVramProfileOptions.Clear();
+        foreach (var profile in VramProfileConstants.DefaultProfiles)
+        {
+            var option = new VramProfileOption(profile, false, SelectVramProfile);
+            AvailableVramProfileOptions.Add(option);
+        }
+        // Set default selection
+        UpdateVramProfileSelectionFromConfiguration();
+    }
+
+    private void SelectVramProfile(int value)
+    {
+        // Build comma-separated string of selected profiles
+        var selectedProfiles = AvailableVramProfileOptions
+            .Where(p => p.IsSelected)
+            .Select(p => p.Value.ToString())
+            .ToList();
+
+        // Update configuration
+        _configuration.Vram.VramProfiles = string.Join(",", selectedProfiles);
+        OnPropertyChanged(nameof(VramProfiles));
+        MarkDirty();
+    }
+
+    private void UpdateVramProfileSelectionFromConfiguration()
+    {
+        var currentProfiles = VramProfiles
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(p => int.TryParse(p.Replace("GB", "").Replace("+", ""), out var val) ? val : 0)
+            .Where(v => v > 0)
+            .ToHashSet();
+
+        foreach (var option in AvailableVramProfileOptions)
+        {
+            option.SetSelectedWithoutCallback(currentProfiles.Contains(option.Value));
+        }
     }
 
     #endregion

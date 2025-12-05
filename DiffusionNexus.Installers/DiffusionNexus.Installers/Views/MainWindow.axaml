@@ -180,20 +180,31 @@
                                 <TextBlock Text="VRAM"
                                            FontSize="16"
                                            FontWeight="SemiBold" />
-                                <Grid ColumnDefinitions="180,*,Auto"
-                                      RowDefinitions="Auto,Auto,Auto"
-                                      ColumnSpacing="12"
-                                      RowSpacing="8">
-                                    <CheckBox Grid.Row="2"
-                                              Content="User VRAM Settings"
-                                              IsChecked="{Binding CreateVramSettings}"
-                                              VerticalAlignment="Center" />
-                                    <TextBox Grid.Row="2"
-                                             Grid.Column="1"
-                                             Watermark="vram mapppings comma separated"
-                                             IsEnabled="{Binding CreateVramSettings}"
-                                             Text="{Binding VramProfiles, UpdateSourceTrigger=PropertyChanged}" />
-                                </Grid>
+                                <CheckBox Content="Enable VRAM Profile Settings"
+                                          IsChecked="{Binding CreateVramSettings}"
+                                          VerticalAlignment="Center" />
+                                <StackPanel IsVisible="{Binding CreateVramSettings}" Spacing="8">
+                                    <TextBlock Text="Select VRAM profiles to include in the configuration:"
+                                               FontSize="12"
+                                               Foreground="Gray"/>
+                                    <ItemsControl ItemsSource="{Binding AvailableVramProfileOptions}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <ToggleButton Content="{Binding DisplayName}"
+                                                              IsChecked="{Binding IsSelected}"
+                                                              Margin="4"
+                                                              Padding="12,8"
+                                                              MinWidth="70"
+                                                              HorizontalContentAlignment="Center"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
