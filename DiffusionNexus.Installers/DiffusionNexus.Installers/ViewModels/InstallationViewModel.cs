@@ -382,6 +382,15 @@ public partial class InstallationViewModel : ViewModelBase
                 return;
             }
 
+            // Show confirmation dialog before proceeding
+            var userConfirmed = await ShowInstallationConfirmationAsync();
+            if (!userConfirmed)
+            {
+                AddLogEntry("Installation cancelled by user.", LogEntryLevel.Warning);
+                StatusMessage = "Installation cancelled";
+                return;
+            }
+
             // Proceed with installation
             StatusMessage = "Starting installation...";
             AddLogEntry("Pre-installation checks passed.", LogEntryLevel.Success);
@@ -554,6 +563,34 @@ public partial class InstallationViewModel : ViewModelBase
 
             return PreInstallationCheckResult.TargetFolderNotEmpty;
         }
+    }
+
+    /// <summary>
+    /// Shows a confirmation dialog with installation details before proceeding.
+    /// </summary>
+    private async Task<bool> ShowInstallationConfirmationAsync()
+    {
+        if (_userPromptService is null || _selectedConfiguration is null)
+        {
+            // No prompt service available, proceed without confirmation
+            return true;
+        }
+
+        var installationTypeName = SelectedInstallationType == InstallationType.FullInstall
+            ? "Full Install"
+            : "Models/Nodes Only";
+
+        var message = $"You are about to make a\n\n" +
+                      $"{installationTypeName}\n\n" +
+                      $"of {_selectedConfiguration.Name}\n\n" +
+                      $"To {TargetInstallFolder}\n\n" +
+                      $"Do you want to continue?";
+
+        return await _userPromptService.ConfirmAsync(
+            "Confirm Installation",
+            message,
+            "Continue",
+            "Cancel");
     }
 
     [RelayCommand]

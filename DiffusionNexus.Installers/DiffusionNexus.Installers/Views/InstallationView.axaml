@@ -301,6 +301,7 @@
                     <StackPanel Orientation="Horizontal" 
                                 HorizontalAlignment="Center" 
                                 Spacing="16">
+
                         <Button Classes="social-btn" 
                                 Command="{Binding OpenYoutubeCommand}"
                                 ToolTip.Tip="Visit our YouTube channel">
