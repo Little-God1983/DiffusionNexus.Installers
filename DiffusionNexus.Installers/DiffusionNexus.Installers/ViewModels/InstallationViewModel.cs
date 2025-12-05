@@ -1,12 +1,15 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DiffusionNexus.Core.Models;
+using DiffusionNexus.DataAccess;
 
 namespace DiffusionNexus.Installers.ViewModels;
 
@@ -23,19 +26,39 @@ public interface IFolderPickerService
 /// </summary>
 public partial class InstallationViewModel : ViewModelBase
 {
+    private readonly IConfigurationRepository? _configurationRepository;
     private IFolderPickerService? _folderPickerService;
+    private InstallationConfiguration? _selectedConfiguration;
 
-    public InstallationViewModel()
+    /// <summary>
+    /// Default constructor for design-time or standalone use.
+    /// </summary>
+    public InstallationViewModel() : this(null)
     {
+    }
+
+    /// <summary>
+    /// Constructor with dependency injection.
+    /// </summary>
+    public InstallationViewModel(IConfigurationRepository? configurationRepository)
+    {
+        _configurationRepository = configurationRepository;
         LogEntries = [];
         AvailableVramProfiles = [];
         AvailableInstallationTypes = [];
+        SavedConfigurations = [];
         
         // Initialize with default VRAM profiles from shared constants
         SetAvailableVramProfiles(VramProfileConstants.DefaultProfiles);
         
         // Initialize installation types
         InitializeInstallationTypes();
+        
+        // Load saved configurations if repository is available
+        if (_configurationRepository is not null)
+        {
+            _ = LoadSavedConfigurationsAsync();
+        }
     }
 
     /// <summary>
@@ -68,11 +91,90 @@ public partial class InstallationViewModel : ViewModelBase
     [ObservableProperty]
     private InstallationType _selectedInstallationType = InstallationType.FullInstall;
 
+    [ObservableProperty]
+    private ConfigurationSelectionItem? _selectedSavedConfiguration;
+
+    partial void OnSelectedSavedConfigurationChanged(ConfigurationSelectionItem? value)
+    {
+        if (value is not null)
+        {
+            _ = LoadConfigurationAsync(value.Id);
+        }
+    }
+
     public ObservableCollection<InstallationLogEntry> LogEntries { get; }
 
     public ObservableCollection<VramProfileOption> AvailableVramProfiles { get; }
 
     public ObservableCollection<InstallationTypeOption> AvailableInstallationTypes { get; }
+
+    /// <summary>
+    /// Gets the collection of saved configurations available for selection.
+    /// </summary>
+    public ObservableCollection<ConfigurationSelectionItem> SavedConfigurations { get; }
+
+    #endregion
+
+    #region Configuration Loading
+
+    /// <summary>
+    /// Loads saved configurations from the database.
+    /// </summary>
+    public async Task LoadSavedConfigurationsAsync()
+    {
+        if (_configurationRepository is null) return;
+
+        var configurations = await _configurationRepository.GetAllAsync();
+        SavedConfigurations.Clear();
+        
+        foreach (var config in configurations)
+        {
+            SavedConfigurations.Add(new ConfigurationSelectionItem(config.Id, config.Name, config.Description));
+        }
+    }
+
+    /// <summary>
+    /// Loads a specific configuration by ID and applies its settings.
+    /// </summary>
+    private async Task LoadConfigurationAsync(Guid configurationId)
+    {
+        if (_configurationRepository is null) return;
+
+        var configuration = await _configurationRepository.GetByIdAsync(configurationId);
+        if (configuration is null) return;
+
+        _selectedConfiguration = configuration;
+        ApplyConfigurationSettings(configuration);
+        AddLogEntry($"Configuration '{configuration.Name}' loaded", LogEntryLevel.Info);
+    }
+
+    /// <summary>
+    /// Applies configuration settings to the view model.
+    /// </summary>
+    private void ApplyConfigurationSettings(InstallationConfiguration configuration)
+    {
+        // Apply target folder from configuration paths if available
+        if (!string.IsNullOrWhiteSpace(configuration.Paths.RootDirectory))
+        {
+            TargetInstallFolder = configuration.Paths.RootDirectory;
+        }
+
+        // Apply VRAM profiles
+        if (!string.IsNullOrWhiteSpace(configuration.Vram.VramProfiles))
+        {
+            var profiles = configuration.Vram.VramProfiles
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(p => int.TryParse(p.Replace("GB", "").Replace("+", ""), out var val) ? val : 0)
+                .Where(v => v > 0)
+                .ToArray();
+
+            if (profiles.Length > 0)
+            {
+                SetAvailableVramProfiles(profiles);
+                SelectVramProfile(profiles[0]);
+            }
+        }
+    }
 
     #endregion
 
@@ -177,6 +279,11 @@ public partial class InstallationViewModel : ViewModelBase
             AddLogEntry($"Target folder: {TargetInstallFolder}", LogEntryLevel.Info);
             AddLogEntry($"VRAM Profile: {SelectedVramProfile} GB", LogEntryLevel.Info);
             AddLogEntry($"Installation Type: {SelectedInstallationType}", LogEntryLevel.Info);
+            
+            if (_selectedConfiguration is not null)
+            {
+                AddLogEntry($"Using configuration: {_selectedConfiguration.Name}", LogEntryLevel.Info);
+            }
 
             // Placeholder for actual installation logic
             for (var i = 0; i <= 100; i += 10)
@@ -258,6 +365,24 @@ public partial class InstallationViewModel : ViewModelBase
     }
 
     #endregion
+}
+
+/// <summary>
+/// Represents a configuration item for selection in the dropdown.
+/// </summary>
+public class ConfigurationSelectionItem
+{
+    public ConfigurationSelectionItem(Guid id, string name, string description)
+    {
+        Id = id;
+        Name = name;
+        Description = description;
+    }
+
+    public Guid Id { get; }
+    public string Name { get; }
+    public string Description { get; }
+    public string Display => string.IsNullOrWhiteSpace(Description) ? Name : $"{Name} - {Description}";
 }
 
 /// <summary>

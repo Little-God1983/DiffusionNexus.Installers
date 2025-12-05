@@ -91,7 +91,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Logs = [];
         SavedConfigurations = [];
         AvailableVramProfileOptions = [];
-        InstallationViewModel = new InstallationViewModel();
+        InstallationViewModel = new InstallationViewModel(configurationRepository);
 
         InitializeVramProfileOptions();
         NewConfiguration();
