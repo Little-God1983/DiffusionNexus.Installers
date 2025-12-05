@@ -5,6 +5,7 @@ namespace DiffusionNexus.Core.Models
         Trace,
         Debug,
         Info,
+        Success,
         Warning,
         Error,
         Critical

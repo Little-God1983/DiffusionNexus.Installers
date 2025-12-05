@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
 using DiffusionNexus.Installers.ViewModels;
 using DiffusionNexus.Installers.Views;
@@ -55,6 +56,19 @@ namespace DiffusionNexus.Installers
         {
             // Register data access layer
             services.AddDiffusionNexusDataAccess();
+
+            // Register Core Services
+            services.AddSingleton<IProcessRunner, ProcessRunner>();
+            services.AddSingleton<IGitService, GitService>();
+            services.AddSingleton<IPythonService, PythonService>();
+            services.AddSingleton<IInstallationOrchestrator, InstallationOrchestrator>();
+            
+            // Register InstallationEngine with orchestrator
+            services.AddSingleton<InstallationEngine>(sp =>
+            {
+                var orchestrator = sp.GetRequiredService<IInstallationOrchestrator>();
+                return new InstallationEngine(orchestrator);
+            });
 
             // Register ViewModels
             services.AddTransient<MainWindowViewModel>();

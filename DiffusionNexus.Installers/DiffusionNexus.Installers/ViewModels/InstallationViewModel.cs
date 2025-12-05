@@ -9,6 +9,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
 
 namespace DiffusionNexus.Installers.ViewModels;
@@ -27,22 +28,26 @@ public interface IFolderPickerService
 public partial class InstallationViewModel : ViewModelBase
 {
     private readonly IConfigurationRepository? _configurationRepository;
+    private readonly InstallationEngine? _installationEngine;
     private IFolderPickerService? _folderPickerService;
     private InstallationConfiguration? _selectedConfiguration;
 
     /// <summary>
     /// Default constructor for design-time or standalone use.
     /// </summary>
-    public InstallationViewModel() : this(null)
+    public InstallationViewModel() : this(null, null)
     {
     }
 
     /// <summary>
     /// Constructor with dependency injection.
     /// </summary>
-    public InstallationViewModel(IConfigurationRepository? configurationRepository)
+    public InstallationViewModel(
+        IConfigurationRepository? configurationRepository,
+        InstallationEngine? installationEngine)
     {
         _configurationRepository = configurationRepository;
+        _installationEngine = installationEngine;
         LogEntries = [];
         AvailableVramProfiles = [];
         AvailableInstallationTypes = [];
@@ -271,6 +276,7 @@ public partial class InstallationViewModel : ViewModelBase
         IsInstalling = true;
         ProgressValue = 0;
         StatusMessage = "Starting installation...";
+        LogEntries.Clear();
         StartInstallationCommand.NotifyCanExecuteChanged();
 
         try
@@ -285,17 +291,77 @@ public partial class InstallationViewModel : ViewModelBase
                 AddLogEntry($"Using configuration: {_selectedConfiguration.Name}", LogEntryLevel.Info);
             }
 
-            // Placeholder for actual installation logic
-            for (var i = 0; i <= 100; i += 10)
+            // Use the installation engine if available
+            if (_installationEngine is not null && _selectedConfiguration is not null)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                await Task.Delay(200, cancellationToken);
-                ProgressValue = i;
-                StatusMessage = $"Installing... {i}%";
-            }
+                // Update the configuration's paths with the UI-selected target folder
+                _selectedConfiguration.Paths.RootDirectory = TargetInstallFolder;
 
-            AddLogEntry("Installation completed successfully!", LogEntryLevel.Success);
-            StatusMessage = "Installation completed!";
+                // Create progress reporters
+                var logProgress = new Progress<InstallLogEntry>(entry =>
+                {
+                    // Map Core.Models.LogLevel to ViewModels.LogEntryLevel
+                    var level = entry.Level switch
+                    {
+                        Core.Models.LogLevel.Success => LogEntryLevel.Success,
+                        Core.Models.LogLevel.Warning => LogEntryLevel.Warning,
+                        Core.Models.LogLevel.Error => LogEntryLevel.Error,
+                        Core.Models.LogLevel.Critical => LogEntryLevel.Error,
+                        _ => LogEntryLevel.Info
+                    };
+                    AddLogEntry(entry.Message, level);
+                });
+
+                var stepProgress = new Progress<InstallationProgress>(progress =>
+                {
+                    ProgressValue = progress.ProgressPercentage;
+                    StatusMessage = progress.Message;
+                });
+
+                // Run the actual installation
+                var result = await _installationEngine.RunInstallationAsync(
+                    _selectedConfiguration,
+                    TargetInstallFolder,
+                    logProgress,
+                    stepProgress,
+                    cancellationToken);
+
+                if (result.IsSuccess)
+                {
+                    AddLogEntry("Installation completed successfully!", LogEntryLevel.Success);
+                    StatusMessage = "Installation completed!";
+                    ProgressValue = 100;
+
+                    if (!string.IsNullOrWhiteSpace(result.RepositoryPath))
+                    {
+                        AddLogEntry($"Repository: {result.RepositoryPath}", LogEntryLevel.Info);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(result.VirtualEnvironmentPath))
+                    {
+                        AddLogEntry($"Virtual Environment: {result.VirtualEnvironmentPath}", LogEntryLevel.Info);
+                    }
+                }
+                else
+                {
+                    AddLogEntry($"Installation failed: {result.Message}", LogEntryLevel.Error);
+                    StatusMessage = "Installation failed";
+                }
+            }
+            else
+            {
+                // Fallback: No configuration selected or no engine
+                if (_selectedConfiguration is null)
+                {
+                    AddLogEntry("No configuration selected. Please select a configuration to install.", LogEntryLevel.Warning);
+                    StatusMessage = "No configuration selected";
+                }
+                else
+                {
+                    AddLogEntry("Installation engine not available.", LogEntryLevel.Error);
+                    StatusMessage = "Installation engine not available";
+                }
+            }
         }
         catch (OperationCanceledException)
         {

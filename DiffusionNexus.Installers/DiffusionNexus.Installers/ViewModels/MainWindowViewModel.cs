@@ -78,20 +78,23 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>
     /// Constructor with dependency injection.
     /// </summary>
-    public MainWindowViewModel(IConfigurationRepository configurationRepository)
+    public MainWindowViewModel(
+        IConfigurationRepository configurationRepository,
+        InstallationEngine installationEngine)
     {
         ArgumentNullException.ThrowIfNull(configurationRepository);
+        ArgumentNullException.ThrowIfNull(installationEngine);
 
         _configurationRepository = configurationRepository;
         _configurationService = new ConfigurationService();
-        _installationEngine = new InstallationEngine();
+        _installationEngine = installationEngine;
 
         GitRepositories = [];
         ModelDownloads = [];
         Logs = [];
         SavedConfigurations = [];
         AvailableVramProfileOptions = [];
-        InstallationViewModel = new InstallationViewModel(configurationRepository);
+        InstallationViewModel = new InstallationViewModel(configurationRepository, installationEngine);
 
         InitializeVramProfileOptions();
         NewConfiguration();

@@ -23,6 +23,23 @@ namespace DiffusionNexus.Core.Services
     /// </summary>
     public class InstallationEngine
     {
+        private readonly IInstallationOrchestrator? _orchestrator;
+
+        /// <summary>
+        /// Default constructor for backward compatibility.
+        /// </summary>
+        public InstallationEngine() : this(null)
+        {
+        }
+
+        /// <summary>
+        /// Constructor with dependency injection.
+        /// </summary>
+        public InstallationEngine(IInstallationOrchestrator? orchestrator)
+        {
+            _orchestrator = orchestrator;
+        }
+
         public IReadOnlyList<string> BuildPlan(InstallationConfiguration configuration)
         {
             var steps = new List<string>();
@@ -31,6 +48,16 @@ namespace DiffusionNexus.Core.Services
             var gitRepositories = configuration.GitRepositories ?? new List<GitRepository>();
             var modelDownloads = configuration.ModelDownloads ?? new List<ModelDownload>();
 
+            // Step 1: Git check
+            steps.Add("Check Git installation (install if missing)");
+
+            // Step 2: Python check
+            steps.Add($"Verify Python {configuration.Python.PythonVersion} is available");
+
+            // Step 3: Clone main repository
+            steps.Add($"Clone main repository: {configuration.Repository.RepositoryUrl}");
+
+            // Step 4: Virtual environment
             if (configuration.Python.CreateVirtualEnvironment)
             {
                 steps.Add($"Create virtual environment '{configuration.Python.VirtualEnvironmentName}' using Python {configuration.Python.PythonVersion}");
@@ -99,6 +126,55 @@ namespace DiffusionNexus.Core.Services
                 progress.Report(new InstallLogEntry { Message = "Verified Git connectivity (simulated)." });
                 progress.Report(new InstallLogEntry { Message = "Verified model download endpoints (simulated)." });
             }, cancellationToken);
+        }
+
+        /// <summary>
+        /// Runs the actual installation using the orchestrator.
+        /// </summary>
+        /// <param name="configuration">Installation configuration.</param>
+        /// <param name="targetDirectory">Target directory for installation.</param>
+        /// <param name="progress">Progress callback for log entries.</param>
+        /// <param name="stepProgress">Progress callback for step progress.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Result of the installation.</returns>
+        public async Task<InstallationResult> RunInstallationAsync(
+            InstallationConfiguration configuration,
+            string targetDirectory,
+            IProgress<InstallLogEntry>? progress = null,
+            IProgress<InstallationProgress>? stepProgress = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (_orchestrator is null)
+            {
+                throw new InvalidOperationException(
+                    "InstallationOrchestrator is not configured. " +
+                    "Use the constructor that accepts IInstallationOrchestrator for real installations.");
+            }
+
+            // Validate configuration first
+            var validation = configuration.Validate();
+            if (!validation.IsValid)
+            {
+                foreach (var error in validation.Errors)
+                {
+                    progress?.Report(new InstallLogEntry { Level = LogLevel.Error, Message = error });
+                }
+
+                return InstallationResult.Failure("Configuration validation failed: " + string.Join("; ", validation.Errors));
+            }
+
+            foreach (var warning in validation.Warnings)
+            {
+                progress?.Report(new InstallLogEntry { Level = LogLevel.Warning, Message = warning });
+            }
+
+            // Run installation through orchestrator
+            return await _orchestrator.InstallAsync(
+                configuration,
+                targetDirectory,
+                progress,
+                stepProgress,
+                cancellationToken);
         }
 
         public async Task InstallAsync(
