@@ -359,12 +359,25 @@ namespace DiffusionNexus.Installers.Views
             }
             AvailableVramProfiles = profiles;
 
+            // Initialize the selected VRAM profile from the model
             if (model.VramProfile.HasValue)
             {
-                _selectedVramProfile = model.VramProfile.Value.ToString().Replace("VRAM_", "") + "GB";
-                if (!AvailableVramProfiles.Contains(_selectedVramProfile))
+                // Convert enum like VRAM_8GB to display format like "8GB"
+                var enumName = model.VramProfile.Value.ToString(); // e.g., "VRAM_8GB"
+                var displayValue = enumName.Replace("VRAM_", ""); // e.g., "8GB"
+                
+                // Check if this profile exists in the available profiles
+                if (AvailableVramProfiles.Contains(displayValue))
                 {
-                    _selectedVramProfile = "None";
+                    _selectedVramProfile = displayValue;
+                }
+                else
+                {
+                    // Try to find a matching profile (e.g., "8GB" might be stored as "8+GB")
+                    var numericPart = displayValue.Replace("GB", "");
+                    var matchingProfile = AvailableVramProfiles.FirstOrDefault(p => 
+                        p.Replace("+GB", "").Replace("GB", "").Replace("+", "") == numericPart);
+                    _selectedVramProfile = matchingProfile ?? "None";
                 }
             }
             else
@@ -401,13 +414,19 @@ namespace DiffusionNexus.Installers.Views
             }
             else
             {
-                _model.VramProfile = SelectedVramProfile switch
+                // Remove "GB" and "+" suffixes and parse the profile value
+                var profileValue = SelectedVramProfile
+                    .Replace("+GB", "")
+                    .Replace("GB", "")
+                    .Replace("+", "")
+                    .Trim();
+                    
+                _model.VramProfile = profileValue switch
                 {
-                    "8GB" => VramProfile.VRAM_8GB,
-                    "12GB" => VramProfile.VRAM_12GB,
-                    "16GB" => VramProfile.VRAM_16GB,
-                    "24GB" => VramProfile.VRAM_24GB,
-                    "24+GB" => VramProfile.VRAM_24GB,
+                    "8" => VramProfile.VRAM_8GB,
+                    "12" => VramProfile.VRAM_12GB,
+                    "16" => VramProfile.VRAM_16GB,
+                    "24" => VramProfile.VRAM_24GB,
                     _ => null
                 };
             }

@@ -751,6 +751,14 @@ public partial class MainWindowViewModel : ViewModelBase
         modelVm.Name = updatedModel.Name;
         modelVm.Destination = updatedModel.Destination;
         modelVm.Enabled = updatedModel.Enabled;
+        
+        // Copy the updated download links back to the original model
+        modelVm.Model.DownloadLinks.Clear();
+        modelVm.Model.DownloadLinks.AddRange(updatedModel.DownloadLinks);
+        
+        // Refresh the download links count in the UI
+        modelVm.RefreshDownloadLinksCount();
+        
         MarkDirty();
     }
 
@@ -977,7 +985,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
         return VramProfiles
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(p => p.EndsWith('+') ? p : p + "GB")
+            .Select(p =>
+            {
+                // Normalize the profile format to always be "XGB" or "X+GB"
+                var trimmed = p.Replace("GB", "").Trim();
+                return trimmed.EndsWith('+') ? trimmed.TrimEnd('+') + "+GB" : trimmed + "GB";
+            })
             .ToArray();
     }
 
@@ -1172,6 +1185,7 @@ public partial class ModelDownloadItemViewModel : ObservableObject
         _destination = model.Destination;
         _vramProfile = model.VramProfile;
         _enabled = model.Enabled;
+        _downloadLinksCount = model.DownloadLinks.Count;
     }
 
     public ModelDownload Model { get; }
@@ -1181,12 +1195,21 @@ public partial class ModelDownloadItemViewModel : ObservableObject
     [ObservableProperty] private string _destination = string.Empty;
     [ObservableProperty] private VramProfile _vramProfile;
     [ObservableProperty] private bool _enabled;
+    [ObservableProperty] private int _downloadLinksCount;
 
     partial void OnNameChanged(string value) { Model.Name = value; _onChanged(); }
     partial void OnUrlChanged(string value) { Model.Url = value; _onChanged(); }
     partial void OnDestinationChanged(string value) { Model.Destination = value; _onChanged(); }
     partial void OnVramProfileChanged(VramProfile value) { Model.VramProfile = value; _onChanged(); }
     partial void OnEnabledChanged(bool value) { Model.Enabled = value; _onChanged(); }
+    
+    /// <summary>
+    /// Refreshes the download links count from the underlying model.
+    /// </summary>
+    public void RefreshDownloadLinksCount()
+    {
+        DownloadLinksCount = Model.DownloadLinks.Count;
+    }
 }
 
 public class InstallLogEntryViewModel(InstallLogEntry entry)

@@ -147,7 +147,7 @@
                                         <!-- URL -->
                                         <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
                                             <TextBlock Text="Download URL" FontSize="12" />
-                                            <TextBox Text="{Binding Url}" 
+                                            <TextBox Text="{Binding Url, Mode=TwoWay}" 
                                                      Watermark="https://example.com/model.safetensors" 
                                                      MinWidth="500"/>
                                         </StackPanel>
@@ -156,7 +156,7 @@
                                         <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
                                             <TextBlock Text="VRAM Profile (optional)" FontSize="12" />
                                             <ComboBox ItemsSource="{Binding AvailableVramProfiles}" 
-                                                      SelectedItem="{Binding SelectedVramProfile}"
+                                                      SelectedItem="{Binding SelectedVramProfile, Mode=TwoWay}"
                                                       MinWidth="200"
                                                       IsEnabled="{Binding VramEnabled}">
                                                 <ComboBox.ItemTemplate>
@@ -170,7 +170,7 @@
                                         <!-- Destination Override -->
                                         <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4">
                                             <TextBlock Text="Destination Override (optional)" FontSize="12" />
-                                            <TextBox Text="{Binding Destination}" 
+                                            <TextBox Text="{Binding Destination, Mode=TwoWay}" 
                                                      Watermark="Leave empty to use model default" 
                                                      MinWidth="500"/>
                                         </StackPanel>
@@ -181,7 +181,7 @@
                                                     VerticalAlignment="Center" 
                                                     Margin="8,0,0,0">
                                             <CheckBox Content="Enabled" 
-                                                      IsChecked="{Binding Enabled}" 
+                                                      IsChecked="{Binding Enabled, Mode=TwoWay}" 
                                                       VerticalAlignment="Center"/>
                                             <Button Content="??" 
                                                     Click="OnRemoveLinkClick" 

@@ -429,7 +429,7 @@
                                                                FontWeight="Bold"
                                                                Foreground="DarkBlue"
                                                                TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding Model.DownloadLinks.Count, StringFormat='Download Links: {0}'}"
+                                                    <TextBlock Text="{Binding DownloadLinksCount, StringFormat='Download Links: {0}'}"
                                                                FontSize="14"
                                                                Foreground="Gray"
                                                                Margin="0,5,0,0"/>
