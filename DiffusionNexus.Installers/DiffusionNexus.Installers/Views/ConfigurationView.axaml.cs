@@ -13,27 +13,42 @@ namespace DiffusionNexus.Installers.Views;
 
 public partial class ConfigurationView : UserControl
 {
+    private bool _servicesAttached;
+
     public ConfigurationView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        AttachedToVisualTree += OnAttachedToVisualTree;
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        if (DataContext is ConfigurationViewModel vm)
-        {
-            var topLevel = TopLevel.GetTopLevel(this);
-            if (topLevel is Window window)
-            {
-                vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(window));
-                vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(window));
-                vm.AttachModelEditorInteraction(new AvaloniaModelEditorInteractionService(window));
-                vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(window));
-                vm.AttachConfigurationNameService(new AvaloniaConfigurationNameService(window, vm));
-                vm.AttachConfigurationManagementService(new AvaloniaConfigurationManagementService(window));
-            }
-        }
+        TryAttachServices();
+    }
+
+    private void OnAttachedToVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        TryAttachServices();
+    }
+
+    private void TryAttachServices()
+    {
+        if (_servicesAttached) return;
+
+        if (DataContext is not ConfigurationViewModel vm) return;
+
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is not Window window) return;
+
+        vm.AttachStorageInteraction(new AvaloniaStorageInteractionService(window));
+        vm.AttachGitRepositoryInteraction(new AvaloniaGitRepositoryInteractionService(window));
+        vm.AttachModelEditorInteraction(new AvaloniaModelEditorInteractionService(window));
+        vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(window));
+        vm.AttachConfigurationNameService(new AvaloniaConfigurationNameService(window, vm));
+        vm.AttachConfigurationManagementService(new AvaloniaConfigurationManagementService(window));
+        
+        _servicesAttached = true;
     }
 
     private void OnMoveUpClick(object? sender, RoutedEventArgs e)

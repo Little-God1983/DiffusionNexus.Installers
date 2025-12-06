@@ -94,9 +94,27 @@ namespace DiffusionNexus.Core.Models
             {
                 result.Errors.Add("Model download list is missing.");
             }
-            else if (config.ModelDownloads.Any(m => string.IsNullOrWhiteSpace(m.Url)))
+            else
             {
-                result.Errors.Add("All model downloads must include a URL.");
+                // Validate each model download
+                foreach (var model in config.ModelDownloads)
+                {
+                    // A model is valid if it has either:
+                    // 1. A legacy Url set, OR
+                    // 2. At least one DownloadLink with a valid URL
+                    var hasLegacyUrl = !string.IsNullOrWhiteSpace(model.Url);
+                    var hasDownloadLinks = model.DownloadLinks?.Count > 0;
+                    var hasValidDownloadLink = model.DownloadLinks?.Any(link => !string.IsNullOrWhiteSpace(link.Url)) == true;
+
+                    if (!hasLegacyUrl && !hasDownloadLinks)
+                    {
+                        result.Errors.Add($"Model '{model.Name}' must have at least one download link.");
+                    }
+                    else if (hasDownloadLinks && !hasValidDownloadLink)
+                    {
+                        result.Errors.Add($"Model '{model.Name}' has download links but none have a valid URL.");
+                    }
+                }
             }
 
             if (config.Torch is null)
