@@ -423,10 +423,15 @@ namespace DiffusionNexus.Installers.Views
                     
                 _model.VramProfile = profileValue switch
                 {
+                    "4" => VramProfile.VRAM_4GB,
+                    "6" => VramProfile.VRAM_6GB,
                     "8" => VramProfile.VRAM_8GB,
                     "12" => VramProfile.VRAM_12GB,
                     "16" => VramProfile.VRAM_16GB,
                     "24" => VramProfile.VRAM_24GB,
+                    "32" => VramProfile.VRAM_32GB,
+                    "48" => VramProfile.VRAM_48GB,
+                    "64" => VramProfile.VRAM_64GB,
                     _ => null
                 };
             }

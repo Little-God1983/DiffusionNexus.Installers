@@ -149,10 +149,15 @@ namespace DiffusionNexus.Core.Models
     /// </summary>
     public enum VramProfile
     {
+        VRAM_4GB,
+        VRAM_6GB,
         VRAM_8GB,
         VRAM_12GB,
         VRAM_16GB,
         VRAM_24GB,
+        VRAM_32GB,
+        VRAM_48GB,
+        VRAM_64GB,
         Custom
     }
 
