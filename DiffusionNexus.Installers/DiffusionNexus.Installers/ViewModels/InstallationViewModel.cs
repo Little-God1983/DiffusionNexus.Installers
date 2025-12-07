@@ -113,8 +113,8 @@ public partial class InstallationViewModel : ViewModelBase
         AvailableInstallationTypes = [];
         SavedConfigurations = [];
         
-        // Initialize with default VRAM profiles from shared constants
-        SetAvailableVramProfiles(VramProfileConstants.DefaultProfiles);
+        // VRAM profiles are hidden by default - will be shown when a configuration with VRAM profiles is loaded
+        IsVramProfileVisible = false;
         
         // Initialize installation types
         InitializeInstallationTypes();
@@ -165,11 +165,24 @@ public partial class InstallationViewModel : ViewModelBase
     [ObservableProperty]
     private ConfigurationSelectionItem? _selectedSavedConfiguration;
 
+    /// <summary>
+    /// Gets whether the VRAM profile selection should be visible.
+    /// Only visible when the configuration has VRAM profiles defined.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isVramProfileVisible;
+
     partial void OnSelectedSavedConfigurationChanged(ConfigurationSelectionItem? value)
     {
         if (value is not null)
         {
             _ = LoadConfigurationAsync(value.Id);
+        }
+        else
+        {
+            // No configuration selected, hide VRAM profiles
+            IsVramProfileVisible = false;
+            AvailableVramProfiles.Clear();
         }
     }
 
@@ -230,7 +243,7 @@ public partial class InstallationViewModel : ViewModelBase
             TargetInstallFolder = configuration.Paths.RootDirectory;
         }
 
-        // Apply VRAM profiles
+        // Apply VRAM profiles - only show if configuration has VRAM profiles
         if (!string.IsNullOrWhiteSpace(configuration.Vram.VramProfiles))
         {
             var profiles = configuration.Vram.VramProfiles
@@ -242,8 +255,21 @@ public partial class InstallationViewModel : ViewModelBase
             if (profiles.Length > 0)
             {
                 SetAvailableVramProfiles(profiles);
+                // Select the first profile by default
                 SelectVramProfile(profiles[0]);
+                IsVramProfileVisible = true;
             }
+            else
+            {
+                IsVramProfileVisible = false;
+                AvailableVramProfiles.Clear();
+            }
+        }
+        else
+        {
+            // No VRAM profiles configured, hide the section
+            IsVramProfileVisible = false;
+            AvailableVramProfiles.Clear();
         }
     }
 
@@ -262,6 +288,9 @@ public partial class InstallationViewModel : ViewModelBase
             var option = new VramProfileOption(profile, profile == SelectedVramProfile, SelectVramProfile);
             AvailableVramProfiles.Add(option);
         }
+
+        // Show or hide the VRAM profile selection based on availability
+        IsVramProfileVisible = AvailableVramProfiles.Count > 0;
     }
 
     private void SelectVramProfile(int value)
@@ -700,6 +729,7 @@ public enum InstallationType
 
 /// <summary>
 /// Represents an installation type option for selection.
+/// Acts like a radio button - cannot be deselected, only another option can be selected.
 /// </summary>
 public partial class InstallationTypeOption : ObservableObject
 {
@@ -723,9 +753,19 @@ public partial class InstallationTypeOption : ObservableObject
 
     partial void OnIsSelectedChanged(bool value)
     {
-        if (!_suppressCallback && value)
+        if (_suppressCallback) return;
+
+        if (value)
         {
+            // User selected this option - notify to update others
             _onSelected?.Invoke(Type);
+        }
+        else
+        {
+            // Prevent deselection - re-select this option
+            _suppressCallback = true;
+            IsSelected = true;
+            _suppressCallback = false;
         }
     }
 
@@ -742,6 +782,7 @@ public partial class InstallationTypeOption : ObservableObject
 
 /// <summary>
 /// Represents a VRAM profile option for selection.
+/// Acts like a radio button - cannot be deselected, only another option can be selected.
 /// </summary>
 public partial class VramProfileOption : ObservableObject
 {
@@ -764,9 +805,19 @@ public partial class VramProfileOption : ObservableObject
 
     partial void OnIsSelectedChanged(bool value)
     {
-        if (!_suppressCallback)
+        if (_suppressCallback) return;
+
+        if (value)
         {
+            // User selected this option - notify to update others
             _onSelected?.Invoke(Value);
+        }
+        else
+        {
+            // Prevent deselection - re-select this option
+            _suppressCallback = true;
+            IsSelected = true;
+            _suppressCallback = false;
         }
     }
 

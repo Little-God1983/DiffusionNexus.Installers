@@ -236,7 +236,7 @@
                 </Border>
 
                 <!-- VRAM Profile Card -->
-                <Border Classes="card">
+                <Border Classes="card" IsVisible="{Binding IsVramProfileVisible}">
                     <StackPanel Spacing="16">
                         <StackPanel Spacing="4">
                             <TextBlock Text="VRAM Profile"
