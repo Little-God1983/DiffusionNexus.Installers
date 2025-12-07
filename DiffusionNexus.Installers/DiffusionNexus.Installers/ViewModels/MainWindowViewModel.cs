@@ -26,12 +26,14 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public MainWindowViewModel(
         IConfigurationRepository configurationRepository,
+        IDatabaseManagementService databaseManagementService,
         InstallationEngine installationEngine)
     {
         ArgumentNullException.ThrowIfNull(configurationRepository);
+        ArgumentNullException.ThrowIfNull(databaseManagementService);
         ArgumentNullException.ThrowIfNull(installationEngine);
 
-        ConfigurationViewModel = new ConfigurationViewModel(configurationRepository, installationEngine);
+        ConfigurationViewModel = new ConfigurationViewModel(configurationRepository, databaseManagementService, installationEngine);
         InstallationViewModel = new InstallationViewModel(configurationRepository, installationEngine);
     }
 }

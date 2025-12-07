@@ -8,8 +8,11 @@
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_Import" Command="{Binding ImportConfigurationCommand}" />
-                <MenuItem Header="Export _As" Command="{Binding SaveAsCommand}" />
+                <MenuItem Header="_Import Configuration" Command="{Binding ImportConfigurationCommand}" />
+                <MenuItem Header="Export Configuration _As" Command="{Binding SaveAsCommand}" />
+                <Separator />
+                <MenuItem Header="Export _Database" Command="{Binding ExportDatabaseCommand}" />
+                <MenuItem Header="Import D_atabase" Command="{Binding ImportDatabaseCommand}" />
             </MenuItem>
             </Menu>
         

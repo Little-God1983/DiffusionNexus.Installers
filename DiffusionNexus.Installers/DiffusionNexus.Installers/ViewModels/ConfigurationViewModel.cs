@@ -15,6 +15,27 @@ namespace DiffusionNexus.Installers.ViewModels;
 #region Service Interfaces
 
 /// <summary>
+/// Service for interacting with database export/import file dialogs.
+/// </summary>
+public interface IDatabaseExportInteractionService
+{
+    /// <summary>
+    /// Prompts the user to select a destination path for database export.
+    /// </summary>
+    Task<string?> PickExportPathAsync(string suggestedFileName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Prompts the user to select a database file to import.
+    /// </summary>
+    Task<string?> PickImportPathAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Asks the user to confirm the database import operation.
+    /// </summary>
+    Task<bool> ConfirmImportAsync();
+}
+
+/// <summary>
 /// Service for interacting with file/folder storage dialogs.
 /// </summary>
 public interface IStorageInteractionService
@@ -74,6 +95,7 @@ public interface IModelEditorInteractionService
 public partial class ConfigurationViewModel : ViewModelBase
 {
     private readonly IConfigurationRepository _configurationRepository;
+    private readonly IDatabaseManagementService _databaseManagementService;
     private readonly ConfigurationService _configurationService;
     private readonly InstallationEngine _installationEngine;
 
@@ -88,6 +110,7 @@ public partial class ConfigurationViewModel : ViewModelBase
     private IConflictResolutionService? _conflictResolution;
     private IConfigurationNameService? _nameService;
     private IConfigurationManagementService? _configurationManagement;
+    private IDatabaseExportInteractionService? _databaseExportInteraction;
 
     /// <summary>
     /// Event raised when a repository edit is requested.
@@ -99,12 +122,15 @@ public partial class ConfigurationViewModel : ViewModelBase
     /// </summary>
     public ConfigurationViewModel(
         IConfigurationRepository configurationRepository,
+        IDatabaseManagementService databaseManagementService,
         InstallationEngine installationEngine)
     {
         ArgumentNullException.ThrowIfNull(configurationRepository);
+        ArgumentNullException.ThrowIfNull(databaseManagementService);
         ArgumentNullException.ThrowIfNull(installationEngine);
 
         _configurationRepository = configurationRepository;
+        _databaseManagementService = databaseManagementService;
         _configurationService = new ConfigurationService();
         _installationEngine = installationEngine;
 
@@ -444,6 +470,9 @@ public partial class ConfigurationViewModel : ViewModelBase
 
     public void AttachConfigurationManagementService(IConfigurationManagementService configurationManagement) =>
         _configurationManagement = configurationManagement;
+
+    public void AttachDatabaseExportInteraction(IDatabaseExportInteractionService databaseExportInteraction) =>
+        _databaseExportInteraction = databaseExportInteraction;
 
     #endregion
 
@@ -848,6 +877,71 @@ public partial class ConfigurationViewModel : ViewModelBase
     #endregion
 
     #region Commands - Database Operations
+
+    [RelayCommand]
+    private async Task ExportDatabaseAsync(CancellationToken cancellationToken)
+    {
+        if (_databaseExportInteraction is null)
+        {
+            ValidationSummary = "Database export interaction service not available.";
+            return;
+        }
+
+        var suggestedFileName = $"diffusion_nexus_backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+        var path = await _databaseExportInteraction.PickExportPathAsync(suggestedFileName, cancellationToken);
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        try
+        {
+            IsBusy = true;
+            await _databaseManagementService.ExportDatabaseAsync(path, cancellationToken);
+            ValidationSummary = $"Database exported successfully to: {path}";
+        }
+        catch (Exception ex)
+        {
+            ValidationSummary = $"Failed to export database: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportDatabaseAsync(CancellationToken cancellationToken)
+    {
+        if (_databaseExportInteraction is null)
+        {
+            ValidationSummary = "Database export interaction service not available.";
+            return;
+        }
+
+        var path = await _databaseExportInteraction.PickImportPathAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        var confirmed = await _databaseExportInteraction.ConfirmImportAsync();
+        if (!confirmed) return;
+
+        try
+        {
+            IsBusy = true;
+            await _databaseManagementService.ImportDatabaseAsync(path, cancellationToken);
+
+            // Reload configurations after import
+            NewConfiguration();
+            await LoadSavedConfigurationsAsync();
+
+            ValidationSummary = "Database imported successfully. Configurations have been reloaded.";
+        }
+        catch (Exception ex)
+        {
+            ValidationSummary = $"Failed to import database: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     [RelayCommand]
     private async Task LoadConfigurationFromDatabaseAsync(ConfigurationListItemViewModel? item)

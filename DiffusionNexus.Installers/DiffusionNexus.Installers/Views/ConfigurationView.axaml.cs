@@ -47,6 +47,7 @@ public partial class ConfigurationView : UserControl
         vm.AttachConflictResolutionService(new AvaloniaConflictResolutionService(window));
         vm.AttachConfigurationNameService(new AvaloniaConfigurationNameService(window, vm));
         vm.AttachConfigurationManagementService(new AvaloniaConfigurationManagementService(window));
+        vm.AttachDatabaseExportInteraction(new AvaloniaDatabaseExportInteractionService(window));
         
         _servicesAttached = true;
     }
@@ -331,6 +332,111 @@ public partial class ConfigurationView : UserControl
 
             buttonPanel.Children.Add(cancelButton);
             buttonPanel.Children.Add(deleteButton);
+
+            var mainPanel = new StackPanel();
+            mainPanel.Children.Add(messageText);
+            mainPanel.Children.Add(buttonPanel);
+
+            dialog.Content = mainPanel;
+
+            var result = await dialog.ShowDialog<bool>(_window);
+            return result;
+        }
+    }
+
+    private sealed class AvaloniaDatabaseExportInteractionService : IDatabaseExportInteractionService
+    {
+        private readonly Window _window;
+
+        public AvaloniaDatabaseExportInteractionService(Window window)
+        {
+            _window = window;
+        }
+
+        public async Task<string?> PickExportPathAsync(string suggestedFileName, CancellationToken cancellationToken = default)
+        {
+            var file = await _window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Database",
+                SuggestedFileName = suggestedFileName,
+                DefaultExtension = "db",
+                FileTypeChoices =
+                [
+                    new FilePickerFileType("SQLite Database")
+                    {
+                        Patterns = ["*.db"]
+                    },
+                    FilePickerFileTypes.All
+                ]
+            });
+
+            return file?.Path.LocalPath;
+        }
+
+        public async Task<string?> PickImportPathAsync(CancellationToken cancellationToken = default)
+        {
+            var files = await _window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Import Database",
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("SQLite Database")
+                    {
+                        Patterns = ["*.db"]
+                    },
+                    FilePickerFileTypes.All
+                ]
+            });
+
+            return files.FirstOrDefault()?.Path.LocalPath;
+        }
+
+        public async Task<bool> ConfirmImportAsync()
+        {
+            var dialog = new Window
+            {
+                Title = "Confirm Database Import",
+                Width = 450,
+                SizeToContent = SizeToContent.Height,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false
+            };
+
+            var messageText = new TextBlock
+            {
+                Text = "Are you sure you want to import this database?\n\nThis will replace all existing configurations with the ones from the imported database.\n\nThis action cannot be undone.",
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(16)
+            };
+
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                Spacing = 8,
+                Margin = new Avalonia.Thickness(16, 0, 16, 16)
+            };
+
+            var cancelButton = new Button
+            {
+                Content = "Cancel",
+                Width = 100
+            };
+
+            var importButton = new Button
+            {
+                Content = "Import",
+                Width = 100,
+                Background = Avalonia.Media.Brushes.OrangeRed,
+                Foreground = Avalonia.Media.Brushes.White
+            };
+
+            cancelButton.Click += (s, e) => dialog.Close(false);
+            importButton.Click += (s, e) => dialog.Close(true);
+
+            buttonPanel.Children.Add(cancelButton);
+            buttonPanel.Children.Add(importButton);
 
             var mainPanel = new StackPanel();
             mainPanel.Children.Add(messageText);

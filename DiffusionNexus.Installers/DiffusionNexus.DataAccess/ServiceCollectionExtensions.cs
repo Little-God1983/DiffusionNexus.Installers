@@ -30,6 +30,10 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IConfigurationRepository, ConfigurationRepository>();
 
+        // Register database management service as singleton (holds path and import event)
+        services.AddSingleton<IDatabaseManagementService>(sp =>
+            new DatabaseManagementService(dbPath, sp));
+
         return services;
     }
 
