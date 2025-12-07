@@ -1,7 +1,9 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -9,7 +11,7 @@ using DiffusionNexus.Installers.ViewModels;
 
 namespace DiffusionNexus.Installers.Views;
 
-public partial class InstallationView : UserControl, IFolderPickerService, IUserPromptService
+public partial class InstallationView : UserControl, IFolderPickerService, IUserPromptService, IFileSaveService, IClipboardService
 {
     // Theme colors matching InstallationView.axaml
     private static readonly Color BackgroundDark = Color.Parse("#1a1a2e");
@@ -35,6 +37,8 @@ public partial class InstallationView : UserControl, IFolderPickerService, IUser
         {
             viewModel.AttachFolderPickerService(this);
             viewModel.AttachUserPromptService(this);
+            viewModel.AttachFileSaveService(this);
+            viewModel.AttachClipboardService(this);
         }
     }
 
@@ -353,5 +357,32 @@ public partial class InstallationView : UserControl, IFolderPickerService, IUser
         dialog.Content = mainPanel;
 
         await dialog.ShowDialog(parentWindow);
+    }
+
+    public async Task<string?> SaveFileAsync(string defaultFileName, string filters, CancellationToken cancellationToken = default)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null) return null;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Log",
+            SuggestedFileName = defaultFileName,
+            FileTypeChoices =
+            [
+                new FilePickerFileType("Text files") { Patterns = ["*.txt"] }
+            ],
+            DefaultExtension = "txt"
+        });
+
+        return file?.Path.LocalPath;
+    }
+
+    public async Task SetTextAsync(string text)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.Clipboard is null) return;
+
+        await topLevel.Clipboard.SetTextAsync(text);
     }
 }

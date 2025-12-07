@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using DiffusionNexus.Core.Models;
 using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
+using System.Text;
 
 namespace DiffusionNexus.Installers.ViewModels;
 
@@ -21,6 +22,33 @@ namespace DiffusionNexus.Installers.ViewModels;
 public interface IFolderPickerService
 {
     Task<string?> PickFolderAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Service interface for saving files.
+/// </summary>
+public interface IFileSaveService
+{
+    /// <summary>
+    /// Opens a save file dialog and returns the selected file path.
+    /// </summary>
+    /// <param name="defaultFileName">Default file name to suggest.</param>
+    /// <param name="filters">File type filters (e.g., "Text files|*.txt").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> SaveFileAsync(string defaultFileName, string filters, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Service interface for clipboard operations.
+/// </summary>
+public interface IClipboardService
+{
+    /// <summary>
+    /// Copies text to the clipboard.
+    /// </summary>
+    /// <param name="text">Text to copy.</param>
+    Task SetTextAsync(string text);
 }
 
 /// <summary>
@@ -90,6 +118,8 @@ public partial class InstallationViewModel : ViewModelBase
     private readonly InstallationEngine? _installationEngine;
     private IFolderPickerService? _folderPickerService;
     private IUserPromptService? _userPromptService;
+    private IFileSaveService? _fileSaveService;
+    private IClipboardService? _clipboardService;
     private InstallationConfiguration? _selectedConfiguration;
 
     /// <summary>
@@ -137,6 +167,18 @@ public partial class InstallationViewModel : ViewModelBase
     /// </summary>
     public void AttachUserPromptService(IUserPromptService userPromptService) =>
         _userPromptService = userPromptService;
+
+    /// <summary>
+    /// Attaches the file save service for exporting files.
+    /// </summary>
+    public void AttachFileSaveService(IFileSaveService fileSaveService) =>
+        _fileSaveService = fileSaveService;
+
+    /// <summary>
+    /// Attaches the clipboard service for copy operations.
+    /// </summary>
+    public void AttachClipboardService(IClipboardService clipboardService) =>
+        _clipboardService = clipboardService;
 
     #region Observable Properties
 
@@ -665,9 +707,93 @@ public partial class InstallationViewModel : ViewModelBase
         OpenUrl("https://patreon.com/AIKnowledgeCentral?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink");
     }
 
+    [RelayCommand]
+    private async Task ExportLogAsync(CancellationToken cancellationToken)
+    {
+        if (LogEntries.Count == 0)
+        {
+            if (_userPromptService is not null)
+            {
+                await _userPromptService.ShowInfoAsync("Export Log", "The log is empty. Nothing to export.");
+            }
+            return;
+        }
+
+        if (_fileSaveService is null)
+        {
+            AddLogEntry("File save service not available.", LogEntryLevel.Warning);
+            return;
+        }
+
+        var defaultFileName = $"installation-log-{DateTime.Now:yyyy-MM-dd-HHmmss}.txt";
+        var filePath = await _fileSaveService.SaveFileAsync(defaultFileName, "Text files|*.txt", cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return; // User cancelled
+        }
+
+        try
+        {
+            var logContent = BuildLogContent();
+            await File.WriteAllTextAsync(filePath, logContent, cancellationToken);
+            AddLogEntry($"Log exported to: {filePath}", LogEntryLevel.Success);
+        }
+        catch (Exception ex)
+        {
+            AddLogEntry($"Failed to export log: {ex.Message}", LogEntryLevel.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task CopyLogToClipboardAsync()
+    {
+        if (LogEntries.Count == 0)
+        {
+            if (_userPromptService is not null)
+            {
+                await _userPromptService.ShowInfoAsync("Copy Log", "The log is empty. Nothing to copy.");
+            }
+            return;
+        }
+
+        if (_clipboardService is null)
+        {
+            AddLogEntry("Clipboard service not available.", LogEntryLevel.Warning);
+            return;
+        }
+
+        try
+        {
+            var logContent = BuildLogContent();
+            await _clipboardService.SetTextAsync(logContent);
+            AddLogEntry("Log copied to clipboard.", LogEntryLevel.Success);
+        }
+        catch (Exception ex)
+        {
+            AddLogEntry($"Failed to copy log: {ex.Message}", LogEntryLevel.Error);
+        }
+    }
+
     #endregion
 
     #region Private Helpers
+
+    private string BuildLogContent()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Installation Log");
+        sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine(new string('=', 50));
+        sb.AppendLine();
+
+        foreach (var entry in LogEntries)
+        {
+            sb.AppendLine(entry.Display);
+        }
+
+        return sb.ToString();
+    }
 
     private void AddLogEntry(string message, LogEntryLevel level)
     {
