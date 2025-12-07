@@ -59,20 +59,129 @@ public sealed class ConfigurationRepository : IConfigurationRepository
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var existing = await GetByIdAsync(configuration.Id, cancellationToken);
+        // Check if configuration exists without tracking
+        var exists = await _context.InstallationConfigurations
+            .AsNoTracking()
+            .AnyAsync(c => c.Id == configuration.Id, cancellationToken);
 
-        if (existing is not null)
+        if (exists)
         {
-            _context.Entry(existing).State = EntityState.Detached;
-            _context.InstallationConfigurations.Update(configuration);
+            // Clear all tracked entities to avoid conflicts
+            _context.ChangeTracker.Clear();
+
+            // Delete existing child collections that will be replaced
+            await DeleteChildCollectionsAsync(configuration.Id, cancellationToken);
+
+            // Clear tracker again after delete operations
+            _context.ChangeTracker.Clear();
+
+            // Store child collections temporarily
+            var gitRepositories = configuration.GitRepositories.ToList();
+            var modelDownloads = configuration.ModelDownloads.ToList();
+
+            // Clear the collections on the configuration
+            configuration.GitRepositories.Clear();
+            configuration.ModelDownloads.Clear();
+
+            // Attach and update ONLY the main configuration entity (without children)
+            _context.InstallationConfigurations.Attach(configuration);
+            _context.Entry(configuration).State = EntityState.Modified;
+
+            // Save the main configuration first
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Now add child entities with new IDs
+            foreach (var repo in gitRepositories)
+            {
+                repo.Id = Guid.NewGuid();
+                configuration.GitRepositories.Add(repo);
+                _context.Set<GitRepository>().Add(repo);
+            }
+
+            foreach (var model in modelDownloads)
+            {
+                model.Id = Guid.NewGuid();
+
+                foreach (var link in model.DownloadLinks)
+                {
+                    link.Id = Guid.NewGuid();
+                }
+
+                configuration.ModelDownloads.Add(model);
+                _context.Set<ModelDownload>().Add(model);
+            }
+
+            // Save the children
+            await _context.SaveChangesAsync(cancellationToken);
         }
         else
         {
+            // New configuration - ensure all entities have IDs
+            if (configuration.Id == Guid.Empty)
+            {
+                configuration.Id = Guid.NewGuid();
+            }
+
+            foreach (var repo in configuration.GitRepositories)
+            {
+                if (repo.Id == Guid.Empty)
+                {
+                    repo.Id = Guid.NewGuid();
+                }
+            }
+
+            foreach (var model in configuration.ModelDownloads)
+            {
+                if (model.Id == Guid.Empty)
+                {
+                    model.Id = Guid.NewGuid();
+                }
+
+                foreach (var link in model.DownloadLinks)
+                {
+                    if (link.Id == Guid.Empty)
+                    {
+                        link.Id = Guid.NewGuid();
+                    }
+                }
+            }
+
             await _context.InstallationConfigurations.AddAsync(configuration, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
         return configuration;
+    }
+
+    /// <summary>
+    /// Deletes all child collections for a configuration to prepare for replacement.
+    /// </summary>
+    private async Task DeleteChildCollectionsAsync(Guid configurationId, CancellationToken cancellationToken)
+    {
+        // Use raw SQL or ExecuteDelete for cleaner deletion without tracking issues
+        // Delete ModelDownloadLinks first (they reference ModelDownloads)
+        var modelDownloadIds = await _context.Set<ModelDownload>()
+            .AsNoTracking()
+            .Where(m => EF.Property<Guid>(m, "InstallationConfigurationId") == configurationId)
+            .Select(m => m.Id)
+            .ToListAsync(cancellationToken);
+
+        if (modelDownloadIds.Count > 0)
+        {
+            await _context.Set<ModelDownloadLink>()
+                .Where(l => modelDownloadIds.Contains(EF.Property<Guid>(l, "ModelDownloadId")))
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        // Delete ModelDownloads
+        await _context.Set<ModelDownload>()
+            .Where(m => EF.Property<Guid>(m, "InstallationConfigurationId") == configurationId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        // Delete GitRepositories
+        await _context.Set<GitRepository>()
+            .Where(r => EF.Property<Guid>(r, "InstallationConfigurationId") == configurationId)
+            .ExecuteDeleteAsync(cancellationToken);
     }
 
     public async Task<InstallationConfiguration> SaveAsNewAsync(
