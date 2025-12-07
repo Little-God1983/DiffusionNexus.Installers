@@ -83,9 +83,18 @@ public sealed class ConfigurationRepository : IConfigurationRepository
             configuration.GitRepositories.Clear();
             configuration.ModelDownloads.Clear();
 
-            // Attach and update ONLY the main configuration entity (without children)
+            // Attach the configuration entity
             _context.InstallationConfigurations.Attach(configuration);
+            
+            // Mark the main entity as modified
             _context.Entry(configuration).State = EntityState.Modified;
+            
+            // Mark all owned entities as modified so their changes are persisted
+            _context.Entry(configuration).Reference(c => c.Repository).TargetEntry!.State = EntityState.Modified;
+            _context.Entry(configuration).Reference(c => c.Python).TargetEntry!.State = EntityState.Modified;
+            _context.Entry(configuration).Reference(c => c.Torch).TargetEntry!.State = EntityState.Modified;
+            _context.Entry(configuration).Reference(c => c.Paths).TargetEntry!.State = EntityState.Modified;
+            _context.Entry(configuration).Reference(c => c.Vram).TargetEntry!.State = EntityState.Modified;
 
             // Save the main configuration first
             await _context.SaveChangesAsync(cancellationToken);
