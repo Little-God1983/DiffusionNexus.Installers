@@ -130,6 +130,16 @@
             <Setter Property="CornerRadius" Value="8"/>
         </Style>
 
+        <!-- Disclaimer Card Style -->
+        <Style Selector="Border.disclaimer-card">
+            <Setter Property="Background" Value="#3a1a1a"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#ff4444"/>
+            <Setter Property="BoxShadow" Value="0 4 20 0 #40ff0000"/>
+        </Style>
+
         <!-- Progress Bar Style -->
         <Style Selector="ProgressBar.styled-progress">
             <Setter Property="Height" Value="24"/>
@@ -335,6 +345,28 @@
                                            FontWeight="SemiBold"/>
                             </StackPanel>
                         </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Disclaimer Section -->
+                <Border Classes="disclaimer-card">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="? IMPORTANT DISCLAIMER"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#ff6b6b"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock TextWrapping="Wrap"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   Foreground="#ff8888"
+                                   TextAlignment="Center"
+                                   LineHeight="22">
+                            <TextBlock.Text>This software is NOT for sale. It is provided as FREE and OPEN-SOURCE software.
+By using this software, you acknowledge that NO legal action of any kind can be taken against the developer(s).
+This software is provided "AS IS" without warranty of any kind, express or implied.
+Use at your own risk.</TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
               
