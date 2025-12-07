@@ -290,12 +290,12 @@ public partial class InstallationViewModel : ViewModelBase
 
         AvailableInstallationTypes.Add(new InstallationTypeOption(
             InstallationType.FullInstall, 
-            "Full Install", 
+            "Full NEW ComfyUI Install", 
             true, 
             SelectInstallationType));
         AvailableInstallationTypes.Add(new InstallationTypeOption(
             InstallationType.ModelsNodesOnly, 
-            "Models/Nodes Only", 
+            "Models/Nodes + Updates Only", 
             false, 
             SelectInstallationType));
     }
@@ -580,17 +580,42 @@ public partial class InstallationViewModel : ViewModelBase
             ? "Full Install"
             : "Models/Nodes Only";
 
-        var message = $"You are about to make a\n\n" +
-                      $"{installationTypeName}\n\n" +
-                      $"of {_selectedConfiguration.Name}\n\n" +
-                      $"To {TargetInstallFolder}\n\n" +
-                      $"Do you want to continue?";
+        var message = $"""
+            Installation Summary
+            ====================
+
+            Type:        {installationTypeName}
+            Workload:    {_selectedConfiguration.Name}
+            Target:      {TargetInstallFolder}
+            Python:      {_selectedConfiguration.Python.PythonVersion}
+
+            Do you want to continue?
+            """;
 
         return await _userPromptService.ConfirmAsync(
             "Confirm Installation",
             message,
             "Continue",
             "Cancel");
+    }
+
+    /// <summary>
+    /// Truncates a path to fit within the specified maximum length.
+    /// </summary>
+    private static string TruncatePath(string path, int maxLength)
+    {
+        if (string.IsNullOrEmpty(path) || path.Length <= maxLength)
+        {
+            return path;
+        }
+
+        // Show beginning and end of path with ellipsis
+        var ellipsis = "...";
+        var availableLength = maxLength - ellipsis.Length;
+        var startLength = availableLength / 2;
+        var endLength = availableLength - startLength;
+
+        return $"{path[..startLength]}{ellipsis}{path[^endLength..]}";
     }
 
     [RelayCommand]
