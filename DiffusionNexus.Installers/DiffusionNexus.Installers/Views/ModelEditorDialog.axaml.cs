@@ -334,7 +334,6 @@ namespace DiffusionNexus.Installers.Views
     public partial class DownloadLinkViewModel : ObservableObject
     {
         private readonly ModelDownloadLink _model;
-        private readonly string[] _baseVramProfiles;
 
         public DownloadLinkViewModel(
             ModelDownloadLink model,
@@ -342,7 +341,6 @@ namespace DiffusionNexus.Installers.Views
             string[] availableVramProfiles)
         {
             _model = model;
-            _baseVramProfiles = availableVramProfiles;
             VramEnabled = vramEnabled;
 
             _url = model.Url;
@@ -359,31 +357,36 @@ namespace DiffusionNexus.Installers.Views
             }
             AvailableVramProfiles = profiles;
 
-            // Initialize the selected VRAM profile from the model
-            if (model.VramProfile.HasValue)
+            // Initialize the selected VRAM profile using centralized helper
+            _selectedVramProfile = model.VramProfile.HasValue
+                ? FindMatchingProfile(VramProfileHelper.ToDisplayString(model.VramProfile.Value))
+                : "None";
+        }
+
+        /// <summary>
+        /// Finds a matching profile in the available profiles list, handling format variations.
+        /// </summary>
+        private string FindMatchingProfile(string displayValue)
+        {
+            // Direct match
+            if (AvailableVramProfiles.Contains(displayValue))
+                return displayValue;
+
+            // Try matching by numeric value (handles "8GB" vs "8+GB" variations)
+            var gb = VramProfileHelper.FromDisplayString(displayValue);
+            if (gb.HasValue)
             {
-                // Convert enum like VRAM_8GB to display format like "8GB"
-                var enumName = model.VramProfile.Value.ToString(); // e.g., "VRAM_8GB"
-                var displayValue = enumName.Replace("VRAM_", ""); // e.g., "8GB"
-                
-                // Check if this profile exists in the available profiles
-                if (AvailableVramProfiles.Contains(displayValue))
+                var numericValue = VramProfileHelper.ToGigabytes(gb.Value)?.ToString();
+                if (numericValue is not null)
                 {
-                    _selectedVramProfile = displayValue;
-                }
-                else
-                {
-                    // Try to find a matching profile (e.g., "8GB" might be stored as "8+GB")
-                    var numericPart = displayValue.Replace("GB", "");
-                    var matchingProfile = AvailableVramProfiles.FirstOrDefault(p => 
-                        p.Replace("+GB", "").Replace("GB", "").Replace("+", "") == numericPart);
-                    _selectedVramProfile = matchingProfile ?? "None";
+                    var match = AvailableVramProfiles.FirstOrDefault(p =>
+                        p.Replace("+GB", "").Replace("GB", "").Replace("+", "") == numericValue);
+                    if (match is not null)
+                        return match;
                 }
             }
-            else
-            {
-                _selectedVramProfile = "None";
-            }
+
+            return "None";
         }
 
         public ObservableCollection<string> AvailableVramProfiles { get; }
@@ -408,33 +411,10 @@ namespace DiffusionNexus.Installers.Views
             _model.Destination = Destination;
             _model.Enabled = Enabled;
 
-            if (SelectedVramProfile == "None" || !VramEnabled)
-            {
-                _model.VramProfile = null;
-            }
-            else
-            {
-                // Remove "GB" and "+" suffixes and parse the profile value
-                var profileValue = SelectedVramProfile
-                    .Replace("+GB", "")
-                    .Replace("GB", "")
-                    .Replace("+", "")
-                    .Trim();
-                    
-                _model.VramProfile = profileValue switch
-                {
-                    "4" => VramProfile.VRAM_4GB,
-                    "6" => VramProfile.VRAM_6GB,
-                    "8" => VramProfile.VRAM_8GB,
-                    "12" => VramProfile.VRAM_12GB,
-                    "16" => VramProfile.VRAM_16GB,
-                    "24" => VramProfile.VRAM_24GB,
-                    "32" => VramProfile.VRAM_32GB,
-                    "48" => VramProfile.VRAM_48GB,
-                    "64" => VramProfile.VRAM_64GB,
-                    _ => null
-                };
-            }
+            // Use centralized helper - one line instead of a switch expression
+            _model.VramProfile = VramEnabled
+                ? VramProfileHelper.FromDisplayString(SelectedVramProfile)
+                : null;
 
             return _model;
         }
