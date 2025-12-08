@@ -72,6 +72,13 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             {
                 steps.Add(InstallationStep.CreateVirtualEnvironment);
             }
+            
+            // Always install PyTorch after venv creation (or Python check if no venv)
+            steps.Add(InstallationStep.InstallTorch);
+            
+            // Install main repository requirements (e.g., ComfyUI's requirements.txt)
+            steps.Add(InstallationStep.InstallRequirements);
+            
             if (configuration.GitRepositories?.Count > 0)
             {
                 steps.Add(InstallationStep.CloneAdditionalRepositories);
@@ -116,13 +123,21 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
                     logProgress,
                     cancellationToken),
+                InstallationStep.InstallTorch => await InstallTorchAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
+                InstallationStep.InstallRequirements => await InstallMainRequirementsAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
                 InstallationStep.CloneAdditionalRepositories => await CloneAdditionalRepositoriesAsync(
                     configuration,
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
                     logProgress,
                     cancellationToken),
-                InstallationStep.InstallRequirements => InstallationStepResult.Skipped(step, "Step not implemented"),
-                InstallationStep.InstallTorch => InstallationStepResult.Skipped(step, "Step not implemented"),
                 InstallationStep.DownloadModels => await DownloadModelsAsync(
                     configuration,
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
@@ -906,6 +921,302 @@ public class InstallationOrchestrator : IInstallationOrchestrator
         return InstallationStepResult.Success(
             InstallationStep.CreateVirtualEnvironment,
             $"Virtual environment created at {result.VirtualEnvironmentPath}");
+    }
+
+    /// <summary>
+    /// Installs PyTorch with the configured CUDA version.
+    /// </summary>
+    private async Task<InstallationStepResult> InstallTorchAsync(
+        InstallationConfiguration configuration,
+        string repositoryPath,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        var torchSettings = configuration.Torch;
+        
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Installing PyTorch..."
+        });
+
+        // Find the pip executable in the virtual environment
+        var venvName = configuration.Python.VirtualEnvironmentName;
+        if (string.IsNullOrWhiteSpace(venvName))
+        {
+            venvName = "venv";
+        }
+        
+        var venvPath = Path.Combine(repositoryPath, venvName);
+        string pipExecutable;
+        
+        if (Directory.Exists(venvPath))
+        {
+            pipExecutable = _pythonService.GetVenvPipExecutable(venvPath);
+            if (!File.Exists(pipExecutable))
+            {
+                progress?.Report(new InstallLogEntry
+                {
+                    Level = LogLevel.Error,
+                    Message = $"Pip executable not found at {pipExecutable}"
+                });
+                return InstallationStepResult.Failure(
+                    InstallationStep.InstallTorch,
+                    $"Pip executable not found at {pipExecutable}");
+            }
+        }
+        else
+        {
+            // No venv, try to use system pip
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = "Virtual environment not found, attempting to use system Python..."
+            });
+            
+            var pythonInstallation = await _pythonService.FindPythonVersionAsync(
+                configuration.Python.PythonVersion, 
+                cancellationToken);
+                
+            if (pythonInstallation is null)
+            {
+                return InstallationStepResult.Failure(
+                    InstallationStep.InstallTorch,
+                    "Python installation not found for PyTorch installation.");
+            }
+            
+            // Use python -m pip instead
+            pipExecutable = pythonInstallation.ExecutablePath;
+        }
+
+        // Build the index URL for PyTorch
+        var indexUrl = torchSettings.IndexUrl;
+        if (string.IsNullOrWhiteSpace(indexUrl) && !string.IsNullOrWhiteSpace(torchSettings.CudaVersion))
+        {
+            var cudaSuffix = DeriveCudaSuffix(torchSettings.CudaVersion);
+            indexUrl = $"https://download.pytorch.org/whl/{cudaSuffix}";
+        }
+
+        // Build the package list
+        var packages = new List<string>();
+        
+        if (!string.IsNullOrWhiteSpace(torchSettings.TorchVersion))
+        {
+            packages.Add($"torch=={torchSettings.TorchVersion}");
+            packages.Add($"torchvision");
+            packages.Add($"torchaudio");
+        }
+        else
+        {
+            packages.Add("torch");
+            packages.Add("torchvision");
+            packages.Add("torchaudio");
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = $"Installing PyTorch packages: {string.Join(", ", packages)}"
+        });
+
+        if (!string.IsNullOrWhiteSpace(indexUrl))
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Info,
+                Message = $"Using index URL: {indexUrl}"
+            });
+        }
+
+        // Install PyTorch packages
+        var result = await _pythonService.InstallPackagesWithIndexAsync(
+            pipExecutable,
+            packages.ToArray(),
+            indexUrl,
+            progress,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Failed to install PyTorch: {result.Message}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallTorch,
+                $"Failed to install PyTorch: {result.Message}");
+        }
+
+        // Verify PyTorch installation
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Verifying PyTorch installation..."
+        });
+
+        var verifyResult = await VerifyTorchInstallationAsync(
+            venvPath,
+            progress,
+            cancellationToken);
+
+        if (!verifyResult.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = $"PyTorch verification: {verifyResult.Message}"
+            });
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = "PyTorch installed successfully."
+        });
+
+        return InstallationStepResult.Success(
+            InstallationStep.InstallTorch,
+            "PyTorch installed successfully.");
+    }
+
+    /// <summary>
+    /// Verifies that PyTorch is installed correctly with CUDA support.
+    /// </summary>
+    private async Task<PythonOperationResult> VerifyTorchInstallationAsync(
+        string venvPath,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        var pythonExecutable = _pythonService.GetVenvPythonExecutable(venvPath);
+        if (!File.Exists(pythonExecutable))
+        {
+            return PythonOperationResult.Failure("Python executable not found in venv.");
+        }
+
+        // Run a verification script
+        var verifyScript = "import torch; print(f'torch {torch.__version__}'); print(f'cuda {torch.version.cuda}'); print(f'cuda_available {torch.cuda.is_available()}')";
+        
+        progress?.Report(InstallLogEntry.ForCommand($"{pythonExecutable} -c \"{verifyScript}\"", venvPath));
+
+        var result = await _pythonService.RunPythonScriptAsync(
+            pythonExecutable,
+            verifyScript,
+            progress,
+            cancellationToken);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Installs the main repository's requirements.txt.
+    /// </summary>
+    private async Task<InstallationStepResult> InstallMainRequirementsAsync(
+        InstallationConfiguration configuration,
+        string repositoryPath,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        var requirementsPath = Path.Combine(repositoryPath, "requirements.txt");
+        
+        if (!File.Exists(requirementsPath))
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Info,
+                Message = "No requirements.txt found in main repository, skipping."
+            });
+            return InstallationStepResult.Skipped(
+                InstallationStep.InstallRequirements,
+                "No requirements.txt found.");
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Installing main repository requirements..."
+        });
+
+        // Find the pip executable in the virtual environment
+        var venvName = configuration.Python.VirtualEnvironmentName;
+        if (string.IsNullOrWhiteSpace(venvName))
+        {
+            venvName = "venv";
+        }
+        
+        var venvPath = Path.Combine(repositoryPath, venvName);
+        
+        if (!Directory.Exists(venvPath))
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = $"Virtual environment not found at {venvPath}, skipping requirements installation."
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallRequirements,
+                $"Virtual environment not found at {venvPath}");
+        }
+
+        var pipExecutable = _pythonService.GetVenvPipExecutable(venvPath);
+        if (!File.Exists(pipExecutable))
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Pip executable not found at {pipExecutable}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallRequirements,
+                $"Pip executable not found at {pipExecutable}");
+        }
+
+        var result = await _pythonService.InstallRequirementsAsync(
+            pipExecutable,
+            requirementsPath,
+            progress,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Failed to install requirements: {result.Message}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallRequirements,
+                $"Failed to install requirements: {result.Message}");
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = "Main repository requirements installed successfully."
+        });
+
+        return InstallationStepResult.Success(
+            InstallationStep.InstallRequirements,
+            "Requirements installed successfully.");
+    }
+
+    /// <summary>
+    /// Derives the CUDA suffix for PyTorch wheel URL (e.g., "cu128" from "12.8").
+    /// </summary>
+    private static string DeriveCudaSuffix(string cudaVersion)
+    {
+        if (string.IsNullOrWhiteSpace(cudaVersion))
+        {
+            return "cpu";
+        }
+
+        var sanitized = new string(cudaVersion.Where(char.IsDigit).ToArray());
+        if (sanitized.Length < 2)
+        {
+            return "cpu";
+        }
+
+        return $"cu{sanitized}";
     }
 
     #region Private Helpers

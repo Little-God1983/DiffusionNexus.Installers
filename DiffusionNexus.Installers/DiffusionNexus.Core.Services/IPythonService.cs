@@ -185,4 +185,34 @@ public interface IPythonService
         string requirementsPath,
         IProgress<InstallLogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Installs packages using pip with a custom index URL (for PyTorch CUDA wheels).
+    /// </summary>
+    /// <param name="pipExecutable">Path to the pip executable.</param>
+    /// <param name="packages">Packages to install.</param>
+    /// <param name="indexUrl">Optional custom index URL (e.g., PyTorch CUDA wheels).</param>
+    /// <param name="progress">Progress callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result of the operation.</returns>
+    Task<PythonOperationResult> InstallPackagesWithIndexAsync(
+        string pipExecutable,
+        string[] packages,
+        string? indexUrl = null,
+        IProgress<InstallLogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Runs a Python script inline and returns the result.
+    /// </summary>
+    /// <param name="pythonExecutable">Path to the Python executable.</param>
+    /// <param name="script">Python script to execute.</param>
+    /// <param name="progress">Progress callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result of the operation.</returns>
+    Task<PythonOperationResult> RunPythonScriptAsync(
+        string pythonExecutable,
+        string script,
+        IProgress<InstallLogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

@@ -362,6 +362,108 @@ public partial class PythonService : IPythonService
         return PythonOperationResult.Success("Requirements installed successfully.");
     }
 
+    /// <inheritdoc />
+    public async Task<PythonOperationResult> InstallPackagesWithIndexAsync(
+        string pipExecutable,
+        string[] packages,
+        string? indexUrl = null,
+        IProgress<InstallLogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pipExecutable);
+        ArgumentNullException.ThrowIfNull(packages);
+
+        if (packages.Length == 0)
+        {
+            return PythonOperationResult.Success("No packages to install.");
+        }
+
+        var packagesArg = string.Join(" ", packages.Select(p => $"\"{p}\""));
+        var installArgs = $"install {packagesArg}";
+        
+        // Add index URL if provided
+        if (!string.IsNullOrWhiteSpace(indexUrl))
+        {
+            installArgs += $" --index-url \"{indexUrl}\"";
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = $"Installing packages: {string.Join(", ", packages)}"
+        });
+
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{pipExecutable} {installArgs}"));
+
+        var result = await _processRunner.RunWithOutputAsync(
+            new ProcessRunOptions
+            {
+                FileName = pipExecutable,
+                Arguments = installArgs,
+                Timeout = TimeSpan.FromMinutes(60) // PyTorch downloads can take a while
+            },
+            line => progress?.Report(new InstallLogEntry { Level = LogLevel.Info, Message = line }),
+            line => progress?.Report(new InstallLogEntry { Level = LogLevel.Warning, Message = line }),
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Failed to install packages: {result.StandardError}"
+            });
+            return PythonOperationResult.Failure($"Failed to install packages: {result.StandardError}");
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = "Packages installed successfully"
+        });
+
+        return PythonOperationResult.Success("Packages installed successfully.");
+    }
+
+    /// <inheritdoc />
+    public async Task<PythonOperationResult> RunPythonScriptAsync(
+        string pythonExecutable,
+        string script,
+        IProgress<InstallLogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pythonExecutable);
+        ArgumentException.ThrowIfNullOrWhiteSpace(script);
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Running Python script..."
+        });
+
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{pythonExecutable} -c \"{script}\""));
+
+        var result = await _processRunner.RunWithOutputAsync(
+            new ProcessRunOptions
+            {
+                FileName = pythonExecutable,
+                Arguments = $"-c \"{script.Replace("\"", "\\\"")}\"",
+                Timeout = TimeSpan.FromSeconds(30)
+            },
+            line => progress?.Report(new InstallLogEntry { Level = LogLevel.Info, Message = line }),
+            line => progress?.Report(new InstallLogEntry { Level = LogLevel.Warning, Message = line }),
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return PythonOperationResult.Failure($"Script execution failed: {result.StandardError}");
+        }
+
+        return PythonOperationResult.Success(result.StandardOutput);
+    }
+
     #region Private Helper Methods
 
     private async Task AddPyLauncherVersionsAsync(List<PythonInstallation> installations, CancellationToken cancellationToken)
