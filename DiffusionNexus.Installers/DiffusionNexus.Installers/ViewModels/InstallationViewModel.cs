@@ -414,7 +414,7 @@ public partial class InstallationViewModel : ViewModelBase
     private bool CanStartInstallation() =>
         !string.IsNullOrWhiteSpace(TargetInstallFolder) && !IsInstalling && DisclaimerAccepted;
 
-    [RelayCommand(CanExecute = nameof(CanStartInstallation))]
+    [RelayCommand(CanExecute = nameof(CanStartInstallation), IncludeCancelCommand = true)]
     private async Task StartInstallationAsync(CancellationToken cancellationToken)
     {
         if (IsInstalling) return;

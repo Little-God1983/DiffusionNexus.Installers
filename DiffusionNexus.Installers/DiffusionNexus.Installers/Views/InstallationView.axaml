@@ -379,14 +379,27 @@ Use at your own risk.</TextBlock.Text>
                     </StackPanel>
                 </Border>
               
-       <!-- Start Button -->
-                <Button Classes="primary-btn"
-                        Content="Start Installation"
-                        Command="{Binding StartInstallationCommand}"
-                        HorizontalAlignment="Center"
-                        Margin="0,10,0,10"/>
-
-                  <!-- Progress Section -->
+       <!-- Start/Cancel Button -->
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Center" 
+                            Spacing="16"
+                            Margin="0,10,0,10">
+                    <Button Classes="primary-btn"
+                            Content="Start Installation"
+                            Command="{Binding StartInstallationCommand}"
+                            IsVisible="{Binding !IsInstalling}"/>
+                    <Button Content="Cancel Installation"
+                            Command="{Binding StartInstallationCancelCommand}"
+                            IsVisible="{Binding IsInstalling}"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            FontSize="18"
+                            Padding="40,16"
+                            CornerRadius="8"
+                            Cursor="Hand"
+                            Background="#cc4444"/>
+                </StackPanel>
+                <!-- Progress Section -->
                 <Border Classes="card">
                     <StackPanel Spacing="16">
                         <Grid ColumnDefinitions="*,Auto">
