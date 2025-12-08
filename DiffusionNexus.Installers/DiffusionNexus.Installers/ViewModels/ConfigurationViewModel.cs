@@ -621,19 +621,19 @@ public partial class ConfigurationViewModel : ViewModelBase
             _installationEngine.DryRunAsync(_configuration, progress, cancellationToken));
     }
 
-    [RelayCommand]
-    private async Task InstallAsync(CancellationToken cancellationToken)
-    {
-        if (!TryValidate(out var summary))
-        {
-            ValidationSummary = summary;
-            return;
-        }
+    //[RelayCommand]
+    //private async Task InstallAsync(CancellationToken cancellationToken)
+    //{
+    //    if (!TryValidate(out var summary))
+    //    {
+    //        ValidationSummary = summary;
+    //        return;
+    //    }
 
-        ValidationSummary = summary;
-        await ExecuteEngineAsync(progress =>
-            _installationEngine.InstallAsync(_configuration, progress, cancellationToken));
-    }
+    //    ValidationSummary = summary;
+    //    await ExecuteEngineAsync(progress =>
+    //        _installationEngine.InstallAsync(_configuration, progress, cancellationToken));
+    //}
 
     #endregion
 

@@ -180,27 +180,27 @@ namespace DiffusionNexus.Core.Services
                 cancellationToken);
         }
 
-        public async Task InstallAsync(
-            InstallationConfiguration configuration,
-            IProgress<InstallLogEntry> progress,
-            CancellationToken cancellationToken = default)
-        {
-            var plan = BuildPlan(configuration);
-            await DryRunAsync(configuration, progress, cancellationToken);
+        //public async Task InstallAsync(
+        //    InstallationConfiguration configuration,
+        //    IProgress<InstallLogEntry> progress,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    var plan = BuildPlan(configuration);
+        //    await DryRunAsync(configuration, progress, cancellationToken);
 
-            await Task.Run(() =>
-            {
-                foreach (var step in plan)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    progress.Report(new InstallLogEntry { Message = step });
-                }
+        //    await Task.Run(() =>
+        //    {
+        //        foreach (var step in plan)
+        //        {
+        //            cancellationToken.ThrowIfCancellationRequested();
+        //            progress.Report(new InstallLogEntry { Message = step });
+        //        }
 
-                progress.Report(new InstallLogEntry { Message = "Installation simulation complete." });
-            }, cancellationToken);
+        //        progress.Report(new InstallLogEntry { Message = "Installation simulation complete." });
+        //    }, cancellationToken);
 
-            WriteLogToDisk(configuration, plan);
-        }
+        //    WriteLogToDisk(configuration, plan);
+        //}
 
         public string ResolveModelDestination(
             InstallationConfiguration configuration,

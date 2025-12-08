@@ -23,12 +23,14 @@ public static class ServiceCollectionExtensions
 
         var dbPath = databasePath ?? GetDefaultDatabasePath();
 
+        // For desktop applications, use Singleton lifetime since there's no HTTP request scope
         services.AddDbContext<DiffusionNexusContext>(options =>
         {
             options.UseSqlite($"Data Source={dbPath}");
-        });
+        }, ServiceLifetime.Singleton);
 
-        services.AddScoped<IConfigurationRepository, ConfigurationRepository>();
+        // Use Singleton for desktop applications (no HTTP request scope available)
+        services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
 
         // Register database management service as singleton (holds path and import event)
         services.AddSingleton<IDatabaseManagementService>(sp =>

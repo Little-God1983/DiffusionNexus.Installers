@@ -35,18 +35,47 @@ public class InstallationOrchestrator : IInstallationOrchestrator
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetDirectory);
 
-        var steps = new[]
+        List<InstallationStep> steps;
+
+        if (true)
         {
-            InstallationStep.GitSetup,
-            InstallationStep.PythonCheck,
-            InstallationStep.CloneMainRepository,
-            InstallationStep.CreateVirtualEnvironment
-        };
+            // Model-only mode: skip repository cloning and environment setup
+            steps = new()
+            {
+                InstallationStep.Update,
+                InstallationStep.DownloadModels
+            };
+        }
+        else
+        {
+            // Full installation mode
+            steps = new()
+            {
+                InstallationStep.GitSetup,
+                InstallationStep.PythonCheck,
+                InstallationStep.CloneMainRepository,
+                
+            };
+
+            if (configuration.Python.CreateVirtualEnvironment)
+            {
+                steps.Add(InstallationStep.CreateVirtualEnvironment);
+            }  
+        }
+
+        if (configuration.GitRepositories?.Count > 0)
+        {
+            steps.Add(InstallationStep.CloneAdditionalRepositories);
+        }
+        if (configuration.ModelDownloads?.Count > 0)
+        {
+            steps.Add(InstallationStep.DownloadModels);
+        }
 
         string? repositoryPath = null;
         string? venvPath = null;
 
-        for (var i = 0; i < steps.Length; i++)
+        for (var i = 0; i < steps.Count; i++)
         {
             var step = steps[i];
             cancellationToken.ThrowIfCancellationRequested();
@@ -55,7 +84,7 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             {
                 CurrentStep = step,
                 StepIndex = i,
-                TotalSteps = steps.Length,
+                TotalSteps = steps.Count,
                 Message = GetStepDescription(step)
             });
 
@@ -75,6 +104,24 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                 InstallationStep.CreateVirtualEnvironment => await CreateVirtualEnvironmentAsync(
                     configuration,
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
+                InstallationStep.CloneAdditionalRepositories => await CloneAdditionalRepositoriesAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
+                InstallationStep.InstallRequirements => InstallationStepResult.Skipped(step, "Step not implemented"),
+                InstallationStep.InstallTorch => InstallationStepResult.Skipped(step, "Step not implemented"),
+                InstallationStep.DownloadModels => await DownloadModelsAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    venvPath,
+                    logProgress,
+                    cancellationToken),
+                InstallationStep.PostInstall => InstallationStepResult.Skipped(step, "Step not implemented"),
+                InstallationStep.Update => await ValidateExistingInstallationAsync(
+                    targetDirectory,
                     logProgress,
                     cancellationToken),
                 _ => InstallationStepResult.Skipped(step, "Step not implemented")
@@ -109,8 +156,8 @@ public class InstallationOrchestrator : IInstallationOrchestrator
         stepProgress?.Report(new InstallationProgress
         {
             CurrentStep = InstallationStep.PostInstall,
-            StepIndex = steps.Length,
-            TotalSteps = steps.Length,
+            StepIndex = steps.Count,
+            TotalSteps = steps.Count,
             Message = "Installation completed"
         });
 
@@ -124,6 +171,56 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             "Installation completed successfully!",
             repositoryPath,
             venvPath);
+    }
+
+    private async Task<InstallationStepResult> DownloadModelsAsync(InstallationConfiguration configuration, string v, string? venvPath, IProgress<InstallLogEntry>? logProgress, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    private async Task<InstallationStepResult> CloneAdditionalRepositoriesAsync(InstallationConfiguration configuration, string v, IProgress<InstallLogEntry>? logProgress, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Validates that an existing installation exists at the target directory for model-only mode.
+    /// </summary>
+    private Task<InstallationStepResult> ValidateExistingInstallationAsync(
+        string targetDirectory,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = $"Validating existing installation at {targetDirectory}..."
+        });
+
+        if (!Directory.Exists(targetDirectory))
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Target directory does not exist: {targetDirectory}"
+            });
+
+            return Task.FromResult(InstallationStepResult.Failure(
+                InstallationStep.Update,
+                $"Target directory does not exist: {targetDirectory}. Model-only mode requires an existing installation."));
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = $"Existing installation validated at {targetDirectory}"
+        });
+
+        return Task.FromResult(InstallationStepResult.Success(
+            InstallationStep.Update,
+            $"Existing installation validated at {targetDirectory}"));
     }
 
     /// <inheritdoc />
@@ -343,6 +440,7 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             InstallationStep.InstallTorch => "Installing PyTorch...",
             InstallationStep.DownloadModels => "Downloading models...",
             InstallationStep.PostInstall => "Running post-installation tasks...",
+            InstallationStep.Update => "Validating existing installation...",
             _ => "Processing..."
         };
     }
