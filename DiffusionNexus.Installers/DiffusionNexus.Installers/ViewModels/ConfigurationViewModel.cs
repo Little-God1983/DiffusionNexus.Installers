@@ -967,6 +967,16 @@ public partial class ConfigurationViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveToDatabaseAsync(CancellationToken cancellationToken)
     {
+        // Reset VRAM settings if no models are configured (VRAM profiles are only needed for model downloads)
+        if (ModelDownloads.Count == 0)
+        {
+            _configuration.Python.CreateVramSettings = false;
+            _configuration.Vram.VramProfiles = string.Empty;
+            OnPropertyChanged(nameof(CreateVramSettings));
+            OnPropertyChanged(nameof(VramProfiles));
+            UpdateVramProfileSelectionFromConfiguration();
+        }
+
         if (!TryValidate(out var summary))
         {
             ValidationSummary = summary;

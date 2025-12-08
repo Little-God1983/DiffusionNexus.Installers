@@ -135,12 +135,16 @@ public partial class PythonService : IPythonService
         // Ensure base directory exists
         Directory.CreateDirectory(options.BaseDirectory);
 
+        // Log the exact command being executed (verbose)
+        var venvCommand = $"-m venv \"{venvPath}\"";
+        progress?.Report(InstallLogEntry.ForCommand($"{pythonPath} {venvCommand}", options.BaseDirectory));
+
         // Create virtual environment
         var result = await _processRunner.RunWithOutputAsync(
             new ProcessRunOptions
             {
                 FileName = pythonPath,
-                Arguments = $"-m venv \"{venvPath}\"",
+                Arguments = venvCommand,
                 WorkingDirectory = options.BaseDirectory,
                 Timeout = TimeSpan.FromMinutes(5)
             },
@@ -185,11 +189,14 @@ public partial class PythonService : IPythonService
                 Message = "Upgrading pip..."
             });
 
+            var pipUpgradeArgs = "-m pip install --upgrade pip";
+            progress?.Report(InstallLogEntry.ForCommand($"{venvPython} {pipUpgradeArgs}", venvPath));
+
             var pipUpgrade = await _processRunner.RunWithOutputAsync(
                 new ProcessRunOptions
                 {
                     FileName = venvPython,
-                    Arguments = "-m pip install --upgrade pip",
+                    Arguments = pipUpgradeArgs,
                     WorkingDirectory = venvPath,
                     Timeout = TimeSpan.FromMinutes(5)
                 },
@@ -253,6 +260,7 @@ public partial class PythonService : IPythonService
         }
 
         var packagesArg = string.Join(" ", packages.Select(p => $"\"{p}\""));
+        var installArgs = $"install {packagesArg}";
 
         progress?.Report(new InstallLogEntry
         {
@@ -260,11 +268,14 @@ public partial class PythonService : IPythonService
             Message = $"Installing packages: {string.Join(", ", packages)}"
         });
 
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{pipExecutable} {installArgs}"));
+
         var result = await _processRunner.RunWithOutputAsync(
             new ProcessRunOptions
             {
                 FileName = pipExecutable,
-                Arguments = $"install {packagesArg}",
+                Arguments = installArgs,
                 Timeout = TimeSpan.FromMinutes(30)
             },
             line => progress?.Report(new InstallLogEntry { Level = LogLevel.Info, Message = line }),
@@ -310,17 +321,22 @@ public partial class PythonService : IPythonService
             return PythonOperationResult.Failure($"Requirements file not found: {requirementsPath}");
         }
 
+        var installArgs = $"install -r \"{requirementsPath}\"";
+
         progress?.Report(new InstallLogEntry
         {
             Level = LogLevel.Info,
             Message = $"Installing requirements from {requirementsPath}..."
         });
 
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{pipExecutable} {installArgs}"));
+
         var result = await _processRunner.RunWithOutputAsync(
             new ProcessRunOptions
             {
                 FileName = pipExecutable,
-                Arguments = $"install -r \"{requirementsPath}\"",
+                Arguments = installArgs,
                 Timeout = TimeSpan.FromMinutes(60)
             },
             line => progress?.Report(new InstallLogEntry { Level = LogLevel.Info, Message = line }),

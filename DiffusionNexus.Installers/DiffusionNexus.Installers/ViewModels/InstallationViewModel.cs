@@ -224,6 +224,13 @@ public partial class InstallationViewModel : ViewModelBase
     private bool _isVramProfileVisible;
 
     /// <summary>
+    /// Gets or sets whether verbose logging is enabled.
+    /// When enabled, shows detailed command information including exact Python/Git commands.
+    /// </summary>
+    [ObservableProperty]
+    private bool _verboseLogging;
+
+    /// <summary>
     /// Gets whether all requirements are met to start installation.
     /// Used for UI binding to show ready state.
     /// </summary>
@@ -509,15 +516,24 @@ public partial class InstallationViewModel : ViewModelBase
             var installationOptions = new InstallationOptions
             {
                 OnlyModelDownload = SelectedInstallationType == InstallationType.ModelsNodesOnly,
-                SelectedVramProfile = SelectedVramProfile
+                SelectedVramProfile = SelectedVramProfile,
+                VerboseLogging = VerboseLogging
             };
 
             // Create progress reporters
             var logProgress = new Progress<InstallLogEntry>(entry =>
             {
+                // Skip debug/verbose messages if verbose logging is disabled
+                if (entry.Level == Core.Models.Enums.LogLevel.Debug && !VerboseLogging)
+                {
+                    return;
+                }
+
                 // Map Core.Models.Enums.LogLevel to ViewModels.LogEntryLevel
                 var level = entry.Level switch
                 {
+                    Core.Models.Enums.LogLevel.Debug => LogEntryLevel.Debug,
+                    Core.Models.Enums.LogLevel.Trace => LogEntryLevel.Debug,
                     Core.Models.Enums.LogLevel.Success => LogEntryLevel.Success,
                     Core.Models.Enums.LogLevel.Warning => LogEntryLevel.Warning,
                     Core.Models.Enums.LogLevel.Error => LogEntryLevel.Error,
@@ -1034,6 +1050,7 @@ public partial class VramProfileOption : ObservableObject
 /// </summary>
 public enum LogEntryLevel
 {
+    Debug,
     Info,
     Success,
     Warning,
@@ -1060,6 +1077,7 @@ public class InstallationLogEntry
 
     public IBrush ForegroundBrush => Level switch
     {
+        LogEntryLevel.Debug => Brushes.Cyan,
         LogEntryLevel.Success => Brushes.Green,
         LogEntryLevel.Warning => Brushes.Orange,
         LogEntryLevel.Error => Brushes.Red,

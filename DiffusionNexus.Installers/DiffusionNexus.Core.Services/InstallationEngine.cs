@@ -17,6 +17,28 @@ namespace DiffusionNexus.Core.Services
         public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.Now;
         public string Message { get; init; } = string.Empty;
         public LogLevel Level { get; init; } = LogLevel.Info;
+
+        /// <summary>
+        /// The exact command that was executed (for verbose logging).
+        /// Only populated when verbose logging is enabled.
+        /// </summary>
+        public string? Command { get; init; }
+
+        /// <summary>
+        /// Creates a log entry for a command execution (verbose mode).
+        /// </summary>
+        public static InstallLogEntry ForCommand(string command, string? workingDirectory = null)
+        {
+            var message = string.IsNullOrWhiteSpace(workingDirectory)
+                ? $"Executing: {command}"
+                : $"Executing in '{workingDirectory}': {command}";
+            return new InstallLogEntry
+            {
+                Level = LogLevel.Debug,
+                Message = message,
+                Command = command
+            };
+        }
     }
 
     /// <summary>

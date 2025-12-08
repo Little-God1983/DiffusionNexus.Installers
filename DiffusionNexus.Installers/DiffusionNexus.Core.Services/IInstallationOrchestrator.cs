@@ -24,9 +24,14 @@ public record InstallationOptions
     public int SelectedVramProfile { get; init; }
 
     /// <summary>
+    /// When true, logs detailed command information including exact Python/Git commands being executed.
+    /// </summary>
+    public bool VerboseLogging { get; init; }
+
+    /// <summary>
     /// Creates default options for a full installation.
     /// </summary>
-    public static InstallationOptions Default => new() { OnlyModelDownload = false, SelectedVramProfile = 0 };
+    public static InstallationOptions Default => new() { OnlyModelDownload = false, SelectedVramProfile = 0, VerboseLogging = false };
 }
 
 /// <summary>

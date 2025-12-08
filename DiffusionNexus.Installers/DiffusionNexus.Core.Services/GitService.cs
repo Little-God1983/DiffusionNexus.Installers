@@ -239,6 +239,9 @@ public class GitService : IGitService
             Message = $"Cloning {options.RepositoryUrl} to {targetPath}..."
         });
 
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{GitExecutable} {args}", options.TargetDirectory));
+
         var result = await _processRunner.RunWithOutputAsync(
             new ProcessRunOptions
             {
@@ -270,11 +273,15 @@ public class GitService : IGitService
                 Message = $"Checking out commit {options.CommitHash}..."
             });
 
+            var checkoutArgs = $"checkout {options.CommitHash}";
+            // Log the exact command being executed (verbose)
+            progress?.Report(InstallLogEntry.ForCommand($"{GitExecutable} {checkoutArgs}", targetPath));
+
             var checkoutResult = await _processRunner.RunAsync(
                 new ProcessRunOptions
                 {
                     FileName = GitExecutable,
-                    Arguments = $"checkout {options.CommitHash}",
+                    Arguments = checkoutArgs,
                     WorkingDirectory = targetPath
                 },
                 cancellationToken);
@@ -326,11 +333,15 @@ public class GitService : IGitService
             Message = $"Pulling latest changes in {repositoryPath}..."
         });
 
+        var pullArgs = "pull";
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{GitExecutable} {pullArgs}", repositoryPath));
+
         var result = await _processRunner.RunWithOutputAsync(
             new ProcessRunOptions
             {
                 FileName = GitExecutable,
-                Arguments = "pull",
+                Arguments = pullArgs,
                 WorkingDirectory = repositoryPath,
                 Timeout = TimeSpan.FromMinutes(10)
             },

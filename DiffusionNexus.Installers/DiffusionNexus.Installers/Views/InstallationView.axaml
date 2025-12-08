@@ -609,6 +609,14 @@ Use at your own risk.</TextBlock.Text>
                                         Orientation="Horizontal" 
                                         Spacing="8" 
                                         VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding VerboseLogging}"
+                                          Foreground="#aaaacc"
+                                          VerticalAlignment="Center"
+                                          ToolTip.Tip="Show detailed command information including exact Python/Git commands">
+                                    <TextBlock Text="🔍 Verbose"
+                                               FontSize="13"
+                                               Foreground="#aaaacc"/>
+                                </CheckBox>
                                 <Button Classes="browse-btn"
                                         Content="📋 Copy"
                                         Command="{Binding CopyLogToClipboardCommand}"
