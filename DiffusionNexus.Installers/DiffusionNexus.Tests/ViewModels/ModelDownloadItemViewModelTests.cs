@@ -1,4 +1,5 @@
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Entities;
+using DiffusionNexus.Core.Models.Enums;
 using DiffusionNexus.Installers.ViewModels;
 using FluentAssertions;
 using Xunit;

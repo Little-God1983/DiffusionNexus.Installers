@@ -1,9 +1,10 @@
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
 using DiffusionNexus.Installers.ViewModels;
 using FluentAssertions;
 using Xunit;
 
 namespace DiffusionNexus.Tests.ViewModels;
+
 
 /// <summary>
 /// Unit tests for ConfigurationListItemViewModel.

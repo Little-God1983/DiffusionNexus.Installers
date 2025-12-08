@@ -1,4 +1,5 @@
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Entities;
 using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
 using DiffusionNexus.Installers.ViewModels;
