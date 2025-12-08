@@ -367,6 +367,15 @@ By using this software, you acknowledge that NO legal action of any kind can be 
 This software is provided "AS IS" without warranty of any kind, express or implied.
 Use at your own risk.</TextBlock.Text>
                         </TextBlock>
+                        <CheckBox IsChecked="{Binding DisclaimerAccepted}"
+                                  HorizontalAlignment="Center"
+                                  Margin="0,8,0,0"
+                                  Cursor="Hand">
+                            <TextBlock Text="I have read and accept the disclaimer above"
+                                       Foreground="#ffaaaa"
+                                       FontWeight="SemiBold"
+                                       FontSize="14"/>
+                        </CheckBox>
                     </StackPanel>
                 </Border>
               

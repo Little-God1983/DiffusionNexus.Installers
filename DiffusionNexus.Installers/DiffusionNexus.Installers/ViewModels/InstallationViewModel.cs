@@ -209,6 +209,14 @@ public partial class InstallationViewModel : ViewModelBase
     private ConfigurationSelectionItem? _selectedSavedConfiguration;
 
     /// <summary>
+    /// Gets or sets whether the user has accepted the disclaimer.
+    /// Must be checked before installation can proceed.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(StartInstallationCommand))]
+    private bool _disclaimerAccepted;
+
+    /// <summary>
     /// Gets whether the VRAM profile selection should be visible.
     /// Only visible when the configuration has VRAM profiles defined.
     /// </summary>
@@ -404,7 +412,7 @@ public partial class InstallationViewModel : ViewModelBase
     }
 
     private bool CanStartInstallation() =>
-        !string.IsNullOrWhiteSpace(TargetInstallFolder) && !IsInstalling;
+        !string.IsNullOrWhiteSpace(TargetInstallFolder) && !IsInstalling && DisclaimerAccepted;
 
     [RelayCommand(CanExecute = nameof(CanStartInstallation))]
     private async Task StartInstallationAsync(CancellationToken cancellationToken)
@@ -561,16 +569,37 @@ public partial class InstallationViewModel : ViewModelBase
         }
 
         var isFullInstall = SelectedInstallationType == InstallationType.FullInstall;
+        var validator = new PreInstallationValidator();
 
-        // If not a full install, skip directory checks
+        // For Models/Nodes only mode, validate that a ComfyUI installation exists
         if (!isFullInstall)
         {
-            AddLogEntry("Models/Nodes only installation - skipping directory checks.", LogEntryLevel.Info);
+            AddLogEntry("Models/Nodes only installation - checking for existing ComfyUI installation.", LogEntryLevel.Info);
+            
+            if (!validator.IsValidComfyUIInstallation(TargetInstallFolder))
+            {
+                var errorMessage = $"No valid ComfyUI installation found at '{TargetInstallFolder}'.\n\n" +
+                    "Models/Nodes Only mode requires an existing ComfyUI installation.\n\n" +
+                    "A valid installation must be either:\n" +
+                    "• A folder named 'ComfyUI'\n" +
+                    "• A folder containing 'venv' or 'python_embeded' directory\n\n" +
+                    "Please select a valid ComfyUI installation folder or use 'Full Install' mode.";
+
+                AddLogEntry($"No valid ComfyUI installation found at '{TargetInstallFolder}'.", LogEntryLevel.Error);
+
+                if (_userPromptService is not null)
+                {
+                    await _userPromptService.ShowErrorAsync("No ComfyUI Installation Found", errorMessage);
+                }
+
+                return PreInstallationCheckResult.TargetFolderNotEmpty;
+            }
+
+            AddLogEntry("Valid ComfyUI installation found.", LogEntryLevel.Success);
             return PreInstallationCheckResult.CanProceed;
         }
 
-        // Check the target directory
-        var validator = new PreInstallationValidator();
+        // Check the target directory for full install
         var validationResult = validator.Validate(_selectedConfiguration, TargetInstallFolder, isFullInstall);
 
         AddLogEntry($"Checking target path: {validationResult.FullTargetPath}", LogEntryLevel.Info);
@@ -594,8 +623,8 @@ public partial class InstallationViewModel : ViewModelBase
             var message = $"The target folder '{validationResult.FullTargetPath}' already exists and is not empty.\n\n" +
                          $"Your configuration includes {contentDescription} to install.\n\n" +
                          $"Would you like to switch to 'Models/Nodes Only' mode?\n" +
-                         $"This will install only the {contentDescription} and will also update ComfyUI to the latest version.\n\n" +
-                         $"Note: The actual update functionality will be implemented in a future version.";
+                         $"This will install only the {contentDescription} to the existing installation.\n\n" +
+                         $"Note: This requires a valid ComfyUI installation in the target folder.";
 
             if (_userPromptService is not null)
             {
@@ -611,9 +640,19 @@ public partial class InstallationViewModel : ViewModelBase
                     SelectInstallationType(InstallationType.ModelsNodesOnly);
                     AddLogEntry("Switched to Models/Nodes Only installation mode.", LogEntryLevel.Info);
                     
-                    // TODO: Implement the actual Models/Nodes only installation
-                    // For now, we'll just return CanProceed but the actual logic will be a future TODO
-                    AddLogEntry("Note: Models/Nodes only mode is not yet fully implemented.", LogEntryLevel.Warning);
+                    // Validate the ComfyUI installation before proceeding
+                    if (!validator.IsValidComfyUIInstallation(validationResult.FullTargetPath ?? TargetInstallFolder))
+                    {
+                        var noInstallError = "No valid ComfyUI installation found in the target folder.\n\n" +
+                            "Models/Nodes Only mode requires an existing ComfyUI installation.";
+                        
+                        AddLogEntry("No valid ComfyUI installation found.", LogEntryLevel.Error);
+                        
+                        await _userPromptService.ShowErrorAsync("No ComfyUI Installation Found", noInstallError);
+                        return PreInstallationCheckResult.TargetFolderNotEmpty;
+                    }
+
+                    AddLogEntry("Valid ComfyUI installation found.", LogEntryLevel.Success);
                     return PreInstallationCheckResult.CanProceed;
                 }
                 else

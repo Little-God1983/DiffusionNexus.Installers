@@ -170,6 +170,56 @@ public class PreInstallationValidator : IPreInstallationValidator
         return PreInstallationValidationResult.TargetNotEmpty(fullTargetPath);
     }
 
+    /// <summary>
+    /// Validates that an existing ComfyUI installation is present at the target directory.
+    /// Required for Models/Nodes only installation mode.
+    /// </summary>
+    /// <param name="targetDirectory">The target directory to check.</param>
+    /// <returns>True if a valid ComfyUI installation is found, false otherwise.</returns>
+    public bool IsValidComfyUIInstallation(string targetDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(targetDirectory))
+        {
+            return false;
+        }
+
+        // Check if the directory exists
+        if (!Directory.Exists(targetDirectory))
+        {
+            return false;
+        }
+
+        // Check if the folder is named "ComfyUI"
+        var directoryName = Path.GetFileName(targetDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        if (string.Equals(directoryName, "ComfyUI", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Check if it contains a "venv" folder
+        var venvPath = Path.Combine(targetDirectory, "venv");
+        if (Directory.Exists(venvPath))
+        {
+            return true;
+        }
+
+        // Check if it contains a "python_embeded" folder
+        var pythonEmbededPath = Path.Combine(targetDirectory, "python_embeded");
+        if (Directory.Exists(pythonEmbededPath))
+        {
+            return true;
+        }
+
+        // Check if it contains a "python_embedded" folder (alternate spelling)
+        var pythonEmbeddedPath = Path.Combine(targetDirectory, "python_embedded");
+        if (Directory.Exists(pythonEmbeddedPath))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private static bool IsDirectoryEmpty(string path)
     {
         try
