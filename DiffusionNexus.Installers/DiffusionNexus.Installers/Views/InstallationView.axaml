@@ -379,26 +379,199 @@ Use at your own risk.</TextBlock.Text>
                     </StackPanel>
                 </Border>
               
-       <!-- Start/Cancel Button -->
-                <StackPanel Orientation="Horizontal" 
-                            HorizontalAlignment="Center" 
-                            Spacing="16"
-                            Margin="0,10,0,10">
-                    <Button Classes="primary-btn"
-                            Content="Start Installation"
-                            Command="{Binding StartInstallationCommand}"
-                            IsVisible="{Binding !IsInstalling}"/>
-                    <Button Content="Cancel Installation"
-                            Command="{Binding StartInstallationCancelCommand}"
-                            IsVisible="{Binding IsInstalling}"
-                            Foreground="White"
-                            FontWeight="Bold"
-                            FontSize="18"
-                            Padding="40,16"
-                            CornerRadius="8"
-                            Cursor="Hand"
-                            Background="#cc4444"/>
-                </StackPanel>
+                <!-- Start/Cancel Button with Checklist -->
+                <Border Classes="card">
+                    <Grid ColumnDefinitions="*,Auto,*">
+                        <!-- Requirements Checklist -->
+                        <StackPanel Grid.Column="0" 
+                                    Spacing="12" 
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,20,0">
+                            <TextBlock Text="Installation Requirements"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       Margin="0,0,0,8"/>
+                            
+                            <!-- Configuration Selected -->
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Panel Width="28" Height="28">
+                                    <Border Width="28" Height="28" CornerRadius="14"
+                                            Background="#444466"
+                                            IsVisible="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                    <Border Width="28" Height="28" CornerRadius="14"
+                                            Background="#44aa44"
+                                            IsVisible="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <TextBlock Text="✓"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </Panel>
+                                <StackPanel>
+                                    <TextBlock Text="Configuration selected"
+                                               FontSize="14"
+                                               Foreground="#88ff88"
+                                               IsVisible="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                    <TextBlock Text="Configuration selected"
+                                               FontSize="14"
+                                               Foreground="#888899"
+                                               IsVisible="{Binding SelectedSavedConfiguration, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Target Folder Selected -->
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Panel Width="28" Height="28">
+                                    <Border Width="28" Height="28" CornerRadius="14"
+                                            Background="#444466"
+                                            IsVisible="{Binding TargetInstallFolder, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                                    <Border Width="28" Height="28" CornerRadius="14"
+                                            Background="#44aa44"
+                                            IsVisible="{Binding TargetInstallFolder, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="✓"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </Panel>
+                                <StackPanel>
+                                    <TextBlock Text="Target folder selected"
+                                               FontSize="14"
+                                               Foreground="#88ff88"
+                                               IsVisible="{Binding TargetInstallFolder, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    <TextBlock Text="Target folder selected"
+                                               FontSize="14"
+                                               Foreground="#888899"
+                                               IsVisible="{Binding TargetInstallFolder, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Disclaimer Accepted -->
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Panel Width="28" Height="28">
+                                    <Border Width="28" Height="28" CornerRadius="14"
+                                            Background="#444466"
+                                            IsVisible="{Binding !DisclaimerAccepted}"/>
+                                    <Border Width="28" Height="28" CornerRadius="14"
+                                            Background="#44aa44"
+                                            IsVisible="{Binding DisclaimerAccepted}">
+                                        <TextBlock Text="✓"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </Panel>
+                                <StackPanel>
+                                    <TextBlock Text="Disclaimer accepted"
+                                               FontSize="14"
+                                               Foreground="#88ff88"
+                                               IsVisible="{Binding DisclaimerAccepted}"/>
+                                    <TextBlock Text="Disclaimer accepted"
+                                               FontSize="14"
+                                               Foreground="#888899"
+                                               IsVisible="{Binding !DisclaimerAccepted}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- Center: Start/Cancel Button -->
+                        <StackPanel Grid.Column="1" 
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Center">
+                            <Button Classes="primary-btn"
+                                    Content="🚀 Start Installation"
+                                    Command="{Binding StartInstallationCommand}"
+                                    IsVisible="{Binding !IsInstalling}"
+                                    MinWidth="250"/>
+                            <Button Content="⏹ Cancel Installation"
+                                    Command="{Binding StartInstallationCancelCommand}"
+                                    IsVisible="{Binding IsInstalling}"
+                                    Foreground="White"
+                                    FontWeight="Bold"
+                                    FontSize="18"
+                                    Padding="40,16"
+                                    CornerRadius="8"
+                                    Cursor="Hand"
+                                    Background="#cc4444"
+                                    MinWidth="250"/>
+                        </StackPanel>
+                        
+                        <!-- Right side: Status indicator -->
+                        <StackPanel Grid.Column="2" 
+                                    Spacing="8" 
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Right"
+                                    Margin="20,0,0,0"
+                                    IsVisible="{Binding !IsInstalling}">
+                            <!-- Ready state -->
+                            <Border Padding="20,16"
+                                    CornerRadius="12"
+                                    Background="#1a3a1a"
+                                    BorderBrush="#44aa44"
+                                    BorderThickness="2"
+                                    IsVisible="{Binding IsReadyToInstall}">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="✅"
+                                               FontSize="28"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Ready to Install"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="#88ff88"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- Not ready state -->
+                            <Border Padding="20,16"
+                                    CornerRadius="12"
+                                    Background="#3a2a1a"
+                                    BorderBrush="#aa6644"
+                                    BorderThickness="2"
+                                    IsVisible="{Binding !IsReadyToInstall}">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="⚠️"
+                                               FontSize="28"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Complete all steps"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="#ffaa44"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        
+                        <!-- Installing state indicator -->
+                        <Border Grid.Column="2"
+                                Padding="20,16"
+                                CornerRadius="12"
+                                Background="#1a2a3a"
+                                BorderBrush="#4488cc"
+                                BorderThickness="2"
+                                IsVisible="{Binding IsInstalling}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right"
+                                Margin="20,0,0,0">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="⏳"
+                                           FontSize="28"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Installing..."
+                                           FontSize="14"
+                                           FontWeight="Bold"
+                                           Foreground="#88aaff"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
                 <!-- Progress Section -->
                 <Border Classes="card">
                     <StackPanel Spacing="16">

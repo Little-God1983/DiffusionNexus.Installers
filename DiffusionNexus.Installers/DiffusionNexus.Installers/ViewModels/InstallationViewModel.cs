@@ -223,6 +223,13 @@ public partial class InstallationViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isVramProfileVisible;
 
+    /// <summary>
+    /// Gets whether all requirements are met to start installation.
+    /// Used for UI binding to show ready state.
+    /// </summary>
+    public bool IsReadyToInstall => 
+        !string.IsNullOrWhiteSpace(TargetInstallFolder) && !IsInstalling && DisclaimerAccepted && SelectedSavedConfiguration is not null;
+
     partial void OnSelectedSavedConfigurationChanged(ConfigurationSelectionItem? value)
     {
         if (value is not null)
@@ -235,6 +242,22 @@ public partial class InstallationViewModel : ViewModelBase
             IsVramProfileVisible = false;
             AvailableVramProfiles.Clear();
         }
+        OnPropertyChanged(nameof(IsReadyToInstall));
+    }
+    
+    partial void OnTargetInstallFolderChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsReadyToInstall));
+    }
+    
+    partial void OnDisclaimerAcceptedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsReadyToInstall));
+    }
+    
+    partial void OnIsInstallingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsReadyToInstall));
     }
 
     public ObservableCollection<InstallationLogEntry> LogEntries { get; }
