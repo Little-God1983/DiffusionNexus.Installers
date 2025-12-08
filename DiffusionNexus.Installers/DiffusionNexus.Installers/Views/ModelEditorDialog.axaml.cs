@@ -5,7 +5,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Entities;
+using DiffusionNexus.Core.Models.Enums;
+using DiffusionNexus.Core.Models.Helpers;
 
 namespace DiffusionNexus.Installers.Views
 {

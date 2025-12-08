@@ -1,73 +1,64 @@
-﻿using DiffusionNexus.Core.Models;
-using DiffusionNexus.Core.Models.InstallStrategy;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DiffusionNexus.Core.Models.Installation;
+using DiffusionNexus.Core.Models.Strategies;
 using Serilog;
 
-namespace DiffusionNexus.Core.Services
+namespace DiffusionNexus.Core.Services;
+
+public class InstallerManager
 {
-    public class InstallerManager
+    private readonly Dictionary<string, IInstallStrategy> _strategies;
+    private IInstallStrategy? _currentStrategy;
+
+    public InstallerManager()
     {
-        private readonly Dictionary<string, IInstallStrategy> _strategies;
-        private IInstallStrategy _currentStrategy;
+        _strategies = new Dictionary<string, IInstallStrategy>();
 
-        public InstallerManager()
+        // Register available strategies
+        RegisterStrategy("ComfyUI", new ComfyUIInstallStrategy());
+        RegisterStrategy("Automatic1111", new Automatic1111InstallStrategy());
+    }
+
+    public void RegisterStrategy(string name, IInstallStrategy strategy)
+    {
+        _strategies[name] = strategy;
+    }
+
+    public void SetStrategy(string applicationName)
+    {
+        if (_strategies.TryGetValue(applicationName, out var strategy))
         {
-            _strategies = new Dictionary<string, IInstallStrategy>();
+            _currentStrategy = strategy;
+        }
+        else
+        {
+            throw new ArgumentException($"No installation strategy found for {applicationName}");
+        }
+    }
 
-            // Register available strategies
-            RegisterStrategy("ComfyUI", new ComfyUIInstallStrategy());
-            RegisterStrategy("Automatic1111", new Automatic1111InstallStrategy());
-            // Add more strategies as needed
+    public async Task<InstallResult> InstallAsync(InstallContext context, IProgress<InstallProgress>? progress = null)
+    {
+        if (_currentStrategy is null)
+        {
+            throw new InvalidOperationException("No installation strategy selected");
         }
 
-        public void RegisterStrategy(string name, IInstallStrategy strategy)
-        {
-            _strategies[name] = strategy;
-        }
+        Log.Information("Starting installation of {App}", _currentStrategy.ApplicationName);
 
-        public void SetStrategy(string applicationName)
+        if (!await _currentStrategy.ValidatePrerequisitesAsync())
         {
-            if (_strategies.TryGetValue(applicationName, out var strategy))
+            return new InstallResult
             {
-                _currentStrategy = strategy;
-            }
-            else
-            {
-                throw new ArgumentException($"No installation strategy found for {applicationName}");
-            }
+                Success = false,
+                Message = "Prerequisites not met",
+                Errors = ["Please ensure Python and Git are installed"]
+            };
         }
 
-        public async Task<InstallResult> InstallAsync(InstallContext context, IProgress<InstallProgress> progress = null)
-        {
-            if (_currentStrategy == null)
-            {
-                throw new InvalidOperationException("No installation strategy selected");
-            }
+        return await _currentStrategy.InstallAsync(context, progress!);
+    }
 
-            Log.Information("Starting installation of {App}", _currentStrategy.ApplicationName);
-
-            // Validate prerequisites
-            if (!await _currentStrategy.ValidatePrerequisitesAsync())
-            {
-                return new InstallResult
-                {
-                    Success = false,
-                    Message = "Prerequisites not met",
-                    Errors = { "Please ensure Python and Git are installed" }
-                };
-            }
-
-            // Perform installation
-            return await _currentStrategy.InstallAsync(context, progress);
-        }
-
-        public IEnumerable<string> GetAvailableApplications()
-        {
-            return _strategies.Keys;
-        }
+    public IEnumerable<string> GetAvailableApplications()
+    {
+        return _strategies.Keys;
     }
 }

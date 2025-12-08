@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Enums;
 
 namespace DiffusionNexus.Installers.Views
 {

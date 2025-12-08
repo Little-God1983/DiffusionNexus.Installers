@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
 
 namespace DiffusionNexus.Core.Services;
 

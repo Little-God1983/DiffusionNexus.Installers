@@ -2,7 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Enums;
 
 namespace DiffusionNexus.Core.Services;
 

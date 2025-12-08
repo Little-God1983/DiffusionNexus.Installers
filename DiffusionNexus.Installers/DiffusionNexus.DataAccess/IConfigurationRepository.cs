@@ -1,5 +1,5 @@
 // File: DiffusionNexus.DataAccess/Repositories/IConfigurationRepository.cs
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
 
 namespace DiffusionNexus.DataAccess;
 

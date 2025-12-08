@@ -5,7 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Entities;
+using DiffusionNexus.Core.Models.Enums;
+using DiffusionNexus.Core.Models.Validation;
 
 namespace DiffusionNexus.Core.Services
 {

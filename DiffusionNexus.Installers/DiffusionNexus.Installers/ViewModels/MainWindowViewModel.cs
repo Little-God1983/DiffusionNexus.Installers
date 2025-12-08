@@ -1,6 +1,8 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Entities;
+using DiffusionNexus.Core.Models.Enums;
 using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
 

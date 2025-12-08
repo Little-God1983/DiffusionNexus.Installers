@@ -1,4 +1,5 @@
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DiffusionNexus.DataAccess;

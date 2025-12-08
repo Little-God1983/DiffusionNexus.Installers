@@ -1,4 +1,5 @@
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Enums;
+using DiffusionNexus.Core.Models.Helpers;
 
 namespace DiffusionNexus.Installers.ViewModels;
 

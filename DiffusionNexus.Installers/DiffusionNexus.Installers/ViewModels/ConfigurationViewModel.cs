@@ -6,7 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Entities;
+using DiffusionNexus.Core.Models.Enums;
+using DiffusionNexus.Core.Models.Validation;
 using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
 

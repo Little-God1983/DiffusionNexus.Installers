@@ -9,7 +9,8 @@ using System.Threading.Tasks;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
+using DiffusionNexus.Core.Models.Enums;
 using DiffusionNexus.Core.Services;
 using DiffusionNexus.DataAccess;
 using System.Text;
@@ -476,13 +477,13 @@ public partial class InstallationViewModel : ViewModelBase
             // Create progress reporters
             var logProgress = new Progress<InstallLogEntry>(entry =>
             {
-                // Map Core.Models.LogLevel to ViewModels.LogEntryLevel
+                // Map Core.Models.Enums.LogLevel to ViewModels.LogEntryLevel
                 var level = entry.Level switch
                 {
-                    Core.Models.LogLevel.Success => LogEntryLevel.Success,
-                    Core.Models.LogLevel.Warning => LogEntryLevel.Warning,
-                    Core.Models.LogLevel.Error => LogEntryLevel.Error,
-                    Core.Models.LogLevel.Critical => LogEntryLevel.Error,
+                    Core.Models.Enums.LogLevel.Success => LogEntryLevel.Success,
+                    Core.Models.Enums.LogLevel.Warning => LogEntryLevel.Warning,
+                    Core.Models.Enums.LogLevel.Error => LogEntryLevel.Error,
+                    Core.Models.Enums.LogLevel.Critical => LogEntryLevel.Error,
                     _ => LogEntryLevel.Info
                 };
                 AddLogEntry(entry.Message, level);

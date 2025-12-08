@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Configuration;
 
 namespace DiffusionNexus.Core.Services;
 

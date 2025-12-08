@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
+using DiffusionNexus.Core.Models.Enums;
 
-namespace DiffusionNexus.Core.Models;
+namespace DiffusionNexus.Core.Models.Helpers;
 
 /// <summary>
 /// Centralized helper for VRAM profile conversions and constants.

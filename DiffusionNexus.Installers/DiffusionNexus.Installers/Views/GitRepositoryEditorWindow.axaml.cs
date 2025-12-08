@@ -1,7 +1,7 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Entities;
 
 namespace DiffusionNexus.Installers.Views
 {

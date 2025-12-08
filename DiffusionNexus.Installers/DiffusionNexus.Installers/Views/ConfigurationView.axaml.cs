@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using DiffusionNexus.Core.Models;
+using DiffusionNexus.Core.Models.Entities;
+using DiffusionNexus.Core.Models.Enums;
 using DiffusionNexus.Installers.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
