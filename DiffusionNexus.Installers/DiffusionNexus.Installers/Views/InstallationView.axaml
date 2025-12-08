@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DiffusionNexus.Installers.ViewModels"
              x:Class="DiffusionNexus.Installers.Views.InstallationView"
@@ -351,7 +351,7 @@
                 <!-- Disclaimer Section -->
                 <Border Classes="disclaimer-card">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="? IMPORTANT DISCLAIMER"
+                        <TextBlock Text="📋 SOFTWARE DISCLAIMER"
                                    FontSize="20"
                                    FontWeight="Bold"
                                    Foreground="#ff6b6b"
@@ -415,11 +415,11 @@ Use at your own risk.</TextBlock.Text>
                                         Spacing="8" 
                                         VerticalAlignment="Center">
                                 <Button Classes="browse-btn"
-                                        Content="?? Copy"
+                                        Content="📋 Copy"
                                         Command="{Binding CopyLogToClipboardCommand}"
                                         ToolTip.Tip="Copy log to clipboard"/>
                                 <Button Classes="browse-btn"
-                                        Content="?? Export"
+                                        Content="💾 Export"
                                         Command="{Binding ExportLogCommand}"
                                         ToolTip.Tip="Export log to text file"/>
                             </StackPanel>
