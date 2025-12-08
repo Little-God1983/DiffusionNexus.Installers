@@ -6,6 +6,30 @@ using DiffusionNexus.Core.Models.Configuration;
 namespace DiffusionNexus.Core.Services;
 
 /// <summary>
+/// Runtime options for installation selected by the user in the installer UI.
+/// These are not persisted with the configuration.
+/// </summary>
+public record InstallationOptions
+{
+    /// <summary>
+    /// When true, skips repository cloning and environment setup,
+    /// and only downloads models to an existing installation.
+    /// </summary>
+    public bool OnlyModelDownload { get; init; }
+
+    /// <summary>
+    /// The VRAM profile selected by the user (in GB).
+    /// Used to filter which models to download.
+    /// </summary>
+    public int SelectedVramProfile { get; init; }
+
+    /// <summary>
+    /// Creates default options for a full installation.
+    /// </summary>
+    public static InstallationOptions Default => new() { OnlyModelDownload = false, SelectedVramProfile = 0 };
+}
+
+/// <summary>
 /// Result of an installation step.
 /// </summary>
 public record InstallationStepResult
@@ -184,6 +208,7 @@ public interface IInstallationOrchestrator
     /// </summary>
     /// <param name="configuration">Installation configuration.</param>
     /// <param name="targetDirectory">Target directory for installation.</param>
+    /// <param name="options">Runtime installation options selected by the user.</param>
     /// <param name="logProgress">Progress callback for log entries.</param>
     /// <param name="stepProgress">Progress callback for step progress.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -191,6 +216,7 @@ public interface IInstallationOrchestrator
     Task<InstallationResult> InstallAsync(
         InstallationConfiguration configuration,
         string targetDirectory,
+        InstallationOptions options,
         IProgress<InstallLogEntry>? logProgress = null,
         IProgress<InstallationProgress>? stepProgress = null,
         CancellationToken cancellationToken = default);

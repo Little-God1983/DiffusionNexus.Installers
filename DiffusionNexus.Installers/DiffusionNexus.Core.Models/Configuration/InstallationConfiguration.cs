@@ -162,6 +162,7 @@ public class VramSettings
 {
     /// <summary>
     /// Comma-separated VRAM profile values (e.g., "8,16,24,24+").
+    /// These are the available profiles for the user to choose from.
     /// Default values when activated: "8,16,24,24+"
     /// </summary>
     public string VramProfiles { get; set; } = string.Empty;

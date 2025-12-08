@@ -471,8 +471,15 @@ public partial class InstallationViewModel : ViewModelBase
             AddLogEntry($"Installation Type: {SelectedInstallationType}", LogEntryLevel.Info);
             AddLogEntry($"Using configuration: {_selectedConfiguration.Name}", LogEntryLevel.Info);
 
-            // Update the configuration's paths with the UI-selected target folder
+            // Apply UI-selected settings to the configuration
             _selectedConfiguration.Paths.RootDirectory = TargetInstallFolder;
+
+            // Create installation options from UI selections
+            var installationOptions = new InstallationOptions
+            {
+                OnlyModelDownload = SelectedInstallationType == InstallationType.ModelsNodesOnly,
+                SelectedVramProfile = SelectedVramProfile
+            };
 
             // Create progress reporters
             var logProgress = new Progress<InstallLogEntry>(entry =>
@@ -499,6 +506,7 @@ public partial class InstallationViewModel : ViewModelBase
             var result = await _installationEngine.RunInstallationAsync(
                 _selectedConfiguration,
                 TargetInstallFolder,
+                installationOptions,
                 logProgress,
                 stepProgress,
                 cancellationToken);

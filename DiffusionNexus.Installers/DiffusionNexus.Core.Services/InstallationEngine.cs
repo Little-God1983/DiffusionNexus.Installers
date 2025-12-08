@@ -136,6 +136,7 @@ namespace DiffusionNexus.Core.Services
         /// </summary>
         /// <param name="configuration">Installation configuration.</param>
         /// <param name="targetDirectory">Target directory for installation.</param>
+        /// <param name="options">Runtime installation options selected by the user.</param>
         /// <param name="progress">Progress callback for log entries.</param>
         /// <param name="stepProgress">Progress callback for step progress.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
@@ -143,6 +144,7 @@ namespace DiffusionNexus.Core.Services
         public async Task<InstallationResult> RunInstallationAsync(
             InstallationConfiguration configuration,
             string targetDirectory,
+            InstallationOptions options,
             IProgress<InstallLogEntry>? progress = null,
             IProgress<InstallationProgress>? stepProgress = null,
             CancellationToken cancellationToken = default)
@@ -175,6 +177,7 @@ namespace DiffusionNexus.Core.Services
             return await _orchestrator.InstallAsync(
                 configuration,
                 targetDirectory,
+                options,
                 progress,
                 stepProgress,
                 cancellationToken);

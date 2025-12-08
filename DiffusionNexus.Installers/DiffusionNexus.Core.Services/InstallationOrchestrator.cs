@@ -28,16 +28,18 @@ public class InstallationOrchestrator : IInstallationOrchestrator
     public async Task<InstallationResult> InstallAsync(
         InstallationConfiguration configuration,
         string targetDirectory,
+        InstallationOptions options,
         IProgress<InstallLogEntry>? logProgress = null,
         IProgress<InstallationProgress>? stepProgress = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetDirectory);
 
         List<InstallationStep> steps;
 
-        if (true)
+        if (options.OnlyModelDownload)
         {
             // Model-only mode: skip repository cloning and environment setup
             steps = new()
@@ -53,23 +55,21 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             {
                 InstallationStep.GitSetup,
                 InstallationStep.PythonCheck,
-                InstallationStep.CloneMainRepository,
-                
+                InstallationStep.CloneMainRepository
             };
 
             if (configuration.Python.CreateVirtualEnvironment)
             {
                 steps.Add(InstallationStep.CreateVirtualEnvironment);
-            }  
-        }
-
-        if (configuration.GitRepositories?.Count > 0)
-        {
-            steps.Add(InstallationStep.CloneAdditionalRepositories);
-        }
-        if (configuration.ModelDownloads?.Count > 0)
-        {
-            steps.Add(InstallationStep.DownloadModels);
+            }
+            if (configuration.GitRepositories?.Count > 0)
+            {
+                steps.Add(InstallationStep.CloneAdditionalRepositories);
+            }
+            if (configuration.ModelDownloads?.Count > 0)
+            {
+                steps.Add(InstallationStep.DownloadModels);
+            }
         }
 
         string? repositoryPath = null;
