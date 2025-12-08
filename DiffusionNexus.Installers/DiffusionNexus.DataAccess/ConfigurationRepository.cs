@@ -203,9 +203,46 @@ public sealed class ConfigurationRepository : IConfigurationRepository
 
         var newConfiguration = CloneConfiguration(configuration);
 
+        // Ensure the new configuration has a unique name
+        newConfiguration.Name = await GenerateUniqueNameAsync(configuration.Name, cancellationToken);
+
         await _context.InstallationConfigurations.AddAsync(newConfiguration, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return newConfiguration;
+    }
+
+    /// <summary>
+    /// Generates a unique configuration name by appending a suffix if needed.
+    /// </summary>
+    private async Task<string> GenerateUniqueNameAsync(string baseName, CancellationToken cancellationToken)
+    {
+        // Check if the base name is already unique
+        if (!await NameExistsAsync(baseName, null, cancellationToken))
+        {
+            return baseName;
+        }
+
+        // Try appending " (Copy)", " (Copy 2)", etc.
+        var copyName = $"{baseName} (Copy)";
+        if (!await NameExistsAsync(copyName, null, cancellationToken))
+        {
+            return copyName;
+        }
+
+        // Find the next available number
+        var counter = 2;
+        while (counter < 100) // Safety limit
+        {
+            var numberedName = $"{baseName} (Copy {counter})";
+            if (!await NameExistsAsync(numberedName, null, cancellationToken))
+            {
+                return numberedName;
+            }
+            counter++;
+        }
+
+        // Fallback: append timestamp
+        return $"{baseName} ({DateTime.Now:yyyyMMdd-HHmmss})";
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
