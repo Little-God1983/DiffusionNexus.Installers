@@ -51,6 +51,12 @@ public class InstallationConfiguration
     /// VRAM settings for model downloads and GPU configuration.
     /// </summary>
     public VramSettings Vram { get; set; } = new();
+
+    /// <summary>
+    /// When true, skips repository cloning and environment setup,
+    /// and only downloads models to an existing installation.
+    /// </summary>
+    public bool OnlyModelDownload { get; set; }
 }
 
 /// <summary>

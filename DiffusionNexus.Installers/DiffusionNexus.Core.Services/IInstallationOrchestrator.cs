@@ -97,7 +97,12 @@ public enum InstallationStep
     /// <summary>
     /// Run post-installation hooks.
     /// </summary>
-    PostInstall
+    PostInstall,
+
+    /// <summary>
+    /// Update an existing installation (model-only mode).
+    /// </summary>
+    Update
 }
 
 /// <summary>
