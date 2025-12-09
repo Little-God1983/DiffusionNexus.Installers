@@ -76,10 +76,16 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             // Always install PyTorch after venv creation (or Python check if no venv)
             steps.Add(InstallationStep.InstallTorch);
 
-            // Install Triton if configured (Windows only, requires venv)
-            if (configuration.Python.InstallTriton)
+            // Install Triton if configured OR if SageAttention is configured (SageAttention requires Triton)
+            if (configuration.Python.InstallTriton || configuration.Python.InstallSageAttention)
             {
                 steps.Add(InstallationStep.InstallTriton);
+            }
+
+            // Install SageAttention if configured (requires Triton, which is added above)
+            if (configuration.Python.InstallSageAttention)
+            {
+                steps.Add(InstallationStep.InstallSageAttention);
             }
             
             // Install main repository requirements (e.g., ComfyUI's requirements.txt)
@@ -135,6 +141,11 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                     logProgress,
                     cancellationToken),
                 InstallationStep.InstallTriton => await InstallTritonAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
+                InstallationStep.InstallSageAttention => await InstallSageAttentionAsync(
                     configuration,
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
                     logProgress,
@@ -1128,7 +1139,8 @@ public class InstallationOrchestrator : IInstallationOrchestrator
         IProgress<InstallLogEntry>? progress,
         CancellationToken cancellationToken)
     {
-        if (!configuration.Python.InstallTriton)
+        // Install Triton if explicitly enabled OR if SageAttention is enabled (SageAttention requires Triton)
+        if (!configuration.Python.InstallTriton && !configuration.Python.InstallSageAttention)
         {
             progress?.Report(new InstallLogEntry
             {
@@ -1140,10 +1152,14 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                 "Triton installation is disabled.");
         }
 
+        var reason = configuration.Python.InstallTriton 
+            ? "Installing Triton for Windows..." 
+            : "Installing Triton for Windows (required by SageAttention)...";
+        
         progress?.Report(new InstallLogEntry
         {
             Level = LogLevel.Info,
-            Message = "Installing Triton for Windows..."
+            Message = reason
         });
 
         // Find the pip executable in the virtual environment
@@ -1231,6 +1247,168 @@ public class InstallationOrchestrator : IInstallationOrchestrator
         return InstallationStepResult.Success(
             InstallationStep.InstallTriton,
             "Triton installed successfully.");
+    }
+
+    /// <summary>
+    /// Installs SageAttention for optimized attention computation.
+    /// Requires Triton to be installed first.
+    /// </summary>
+    private async Task<InstallationStepResult> InstallSageAttentionAsync(
+        InstallationConfiguration configuration,
+        string repositoryPath,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (!configuration.Python.InstallSageAttention)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Info,
+                Message = "SageAttention installation is disabled. Skipping..."
+            });
+            return InstallationStepResult.Skipped(
+                InstallationStep.InstallSageAttention,
+                "SageAttention installation is disabled.");
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Installing SageAttention..."
+        });
+
+        // Find the pip executable in the virtual environment
+        var venvName = configuration.Python.VirtualEnvironmentName;
+        if (string.IsNullOrWhiteSpace(venvName))
+        {
+            venvName = "venv";
+        }
+
+        var venvPath = Path.Combine(repositoryPath, venvName);
+        string pipExecutable;
+
+        if (Directory.Exists(venvPath))
+        {
+            pipExecutable = _pythonService.GetVenvPipExecutable(venvPath);
+            if (!File.Exists(pipExecutable))
+            {
+                progress?.Report(new InstallLogEntry
+                {
+                    Level = LogLevel.Error,
+                    Message = $"Pip executable not found at {pipExecutable}"
+                });
+                return InstallationStepResult.Failure(
+                    InstallationStep.InstallSageAttention,
+                    $"Pip executable not found at {pipExecutable}");
+            }
+        }
+        else
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Virtual environment not found at {venvPath}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallSageAttention,
+                $"Virtual environment not found at {venvPath}. SageAttention requires a virtual environment.");
+        }
+
+        // Step 1: Uninstall any existing sageattention package
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Uninstalling existing sageattention package (if any)..."
+        });
+
+        await _pythonService.UninstallPackagesAsync(
+            pipExecutable,
+            ["sageattention"],
+            progress,
+            cancellationToken);
+
+        // Step 2: Install SageAttention from pre-built wheel
+        // Using the Windows wheel from woct0rdho's releases
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Installing SageAttention 2.2.0 (Windows, cu128, Torch 2.8)..."
+        });
+
+        // Install with --no-deps to avoid pulling in incompatible dependencies
+        var pythonExecutable = _pythonService.GetVenvPythonExecutable(venvPath);
+        var wheelUrl = "https://github.com/woct0rdho/SageAttention/releases/download/v2.2.0-windows.post2/sageattention-2.2.0+cu128torch2.8.0.post2-cp39-abi3-win_amd64.whl";
+        
+        var installArgs = $"-m pip install --no-deps \"{wheelUrl}\"";
+        progress?.Report(InstallLogEntry.ForCommand($"{pythonExecutable} {installArgs}", venvPath));
+
+        var result = await _pythonService.RunPythonScriptAsync(
+            pythonExecutable,
+            $"import subprocess; import sys; sys.exit(subprocess.call([sys.executable, '-m', 'pip', 'install', '--no-deps', '{wheelUrl}']))",
+            progress,
+            cancellationToken);
+
+        // Alternative: Use pip directly with the wheel URL
+        var pipResult = await _pythonService.InstallPackagesAsync(
+            pipExecutable,
+            [$"--no-deps", wheelUrl],
+            progress,
+            cancellationToken);
+
+        if (!pipResult.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Failed to install SageAttention: {pipResult.Message}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallSageAttention,
+                $"Failed to install SageAttention: {pipResult.Message}",
+                shouldContinue: true); // Continue with installation even if SageAttention fails
+        }
+
+        // Step 3: Verify SageAttention installation
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Verifying SageAttention import..."
+        });
+
+        var verifyScript = "import sageattention; import torch; print(f'sage: {getattr(sageattention, \"__version__\", \"?\")} torch: {torch.__version__} cuda: {getattr(torch.version, \"cuda\", None)}')";
+        var verifyResult = await _pythonService.RunPythonScriptAsync(
+            pythonExecutable,
+            verifyScript,
+            progress,
+            cancellationToken);
+
+        if (!verifyResult.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = $"SageAttention verification failed: {verifyResult.Message}"
+            });
+            // Don't fail the step, just warn
+        }
+        else
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Success,
+                Message = $"SageAttention verified: {verifyResult.Message}"
+            });
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = "SageAttention installed successfully."
+        });
+
+        return InstallationStepResult.Success(
+            InstallationStep.InstallSageAttention,
+            "SageAttention installed successfully.");
     }
 
     /// <summary>
@@ -1358,6 +1536,7 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             InstallationStep.InstallRequirements => "Installing requirements...",
             InstallationStep.InstallTorch => "Installing PyTorch...",
             InstallationStep.InstallTriton => "Installing Triton...",
+            InstallationStep.InstallSageAttention => "Installing SageAttention...",
             InstallationStep.DownloadModels => "Downloading models...",
             InstallationStep.PostInstall => "Running post-installation tasks...",
             InstallationStep.Update => "Validating existing installation...",

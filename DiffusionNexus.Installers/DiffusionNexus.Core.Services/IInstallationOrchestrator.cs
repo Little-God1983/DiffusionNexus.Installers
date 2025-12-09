@@ -124,6 +124,11 @@ public enum InstallationStep
     InstallTriton,
 
     /// <summary>
+    /// Install SageAttention for optimized attention computation.
+    /// </summary>
+    InstallSageAttention,
+
+    /// <summary>
     /// Download models.
     /// </summary>
     DownloadModels,
