@@ -99,6 +99,9 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             {
                 steps.Add(InstallationStep.DownloadModels);
             }
+
+            // Always add PostInstall step to create launcher scripts
+            steps.Add(InstallationStep.PostInstall);
         }
 
         string? repositoryPath = null;
@@ -166,7 +169,11 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                     venvPath,
                     logProgress,
                     cancellationToken),
-                InstallationStep.PostInstall => InstallationStepResult.Skipped(step, "Step not implemented"),
+                InstallationStep.PostInstall => await CreateLauncherScriptsAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
                 InstallationStep.Update => await ValidateExistingInstallationAsync(
                     targetDirectory,
                     logProgress,
@@ -1520,6 +1527,69 @@ public class InstallationOrchestrator : IInstallationOrchestrator
         }
 
         return $"cu{sanitized}";
+    }
+
+    /// <summary>
+    /// Creates launcher scripts (batch files) for running the application.
+    /// </summary>
+    private Task<InstallationStepResult> CreateLauncherScriptsAsync(
+        InstallationConfiguration configuration,
+        string repositoryPath,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Creating launcher scripts..."
+        });
+
+        try
+        {
+            // Create run_nvidia.bat for NVIDIA GPU users
+            var batFilePath = Path.Combine(repositoryPath, "run_nvidia.bat");
+            var batContent = """
+                @echo off
+                REM Activate the virtual environment
+                call venv\Scripts\activate
+
+                REM Run ComfyUI in a new window with custom output
+                python main.py --windows-standalone-build
+                """;
+
+            File.WriteAllText(batFilePath, batContent);
+
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Success,
+                Message = "Created launcher script: run_nvidia.bat"
+            });
+
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Info,
+                Message = $"You can run the application using: {batFilePath}"
+            });
+
+            return Task.FromResult(InstallationStepResult.Success(
+                InstallationStep.PostInstall,
+                $"Launcher scripts created at {repositoryPath}"));
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = $"Failed to create launcher scripts: {ex.Message}"
+            });
+
+            // Don't fail the installation if script creation fails
+            return Task.FromResult(InstallationStepResult.Success(
+                InstallationStep.PostInstall,
+                $"Post-install completed with warnings: {ex.Message}"));
+        }
     }
 
     #region Private Helpers
