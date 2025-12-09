@@ -162,8 +162,8 @@ public partial class ConfigurationViewModel : ViewModelBase
 
     public RepositoryType[] RepositoryTypes { get; } = Enum.GetValues<RepositoryType>();
     public string[] PythonVersions { get; } = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"];
-    public string[] SuggestedCudaVersions { get; } = ["12.8", "12.4", "12.1", "11.8"];
-    public string[] SuggestedTorchVersions { get; } = [string.Empty, "2.4.0", "2.3.1", "2.2.2"];
+    public string[] SuggestedCudaVersions { get; } = ["13.0","12.9","12.8", "12.4", "12.1", "11.8"];
+    public string[] SuggestedTorchVersions { get; } = [string.Empty, "2.8.0", "2.4.0", "2.3.1", "2.2.2"];
 
     #endregion
 

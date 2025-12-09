@@ -166,6 +166,55 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Torch Settings Section -->
+                <Border Padding="16"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Background="{DynamicResource ThemeControlLowBrush}"
+                        BorderBrush="{DynamicResource ThemeBorderMidBrush}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Torch / CUDA"
+                                   FontSize="16"
+                                   FontWeight="SemiBold" />
+                        <Grid ColumnDefinitions="180,*"
+                              RowDefinitions="Auto,Auto,Auto,Auto"
+                              ColumnSpacing="12"
+                              RowSpacing="8">
+                            <TextBlock Text="CUDA Version"
+                                       VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding SuggestedCudaVersions}"
+                                      SelectedItem="{Binding CudaVersion}"
+                                      IsEditable="True" />
+
+                            <TextBlock Grid.Row="1"
+                                       Text="Torch Version"
+                                       VerticalAlignment="Center" />
+                            <ComboBox Grid.Row="1"
+                                      Grid.Column="1"
+                                      ItemsSource="{Binding SuggestedTorchVersions}"
+                                      SelectedItem="{Binding TorchVersion}"
+                                      IsEditable="True" />
+
+                            <TextBlock Grid.Row="2"
+                                       Text="Index URL (optional)"
+                                       VerticalAlignment="Center" />
+                            <TextBox Grid.Row="2"
+                                     Grid.Column="1"
+                                     Watermark="Leave empty to auto-derive from CUDA version"
+                                     Text="{Binding TorchIndexUrl, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="3"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding TorchCompatibilityHint}"
+                                       FontSize="12"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"
+                                       Margin="0,4,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <!-- VRAM Section -->
                 <Border Padding="16"
                         BorderThickness="1"

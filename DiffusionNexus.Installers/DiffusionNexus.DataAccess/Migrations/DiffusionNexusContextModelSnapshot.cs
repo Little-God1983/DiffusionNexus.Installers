@@ -44,7 +44,7 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                     b.HasIndex("InstallationConfigurationId");
 
-                    b.ToTable("GitRepository");
+                    b.ToTable("GitRepository", (string)null);
                 });
 
             modelBuilder.Entity("DiffusionNexus.Core.Models.InstallationConfiguration", b =>
@@ -66,7 +66,7 @@ namespace DiffusionNexus.DataAccess.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("InstallationConfigurations");
+                    b.ToTable("InstallationConfigurations", (string)null);
                 });
 
             modelBuilder.Entity("DiffusionNexus.Core.Models.ModelDownload", b =>
@@ -100,7 +100,7 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                     b.HasIndex("InstallationConfigurationId");
 
-                    b.ToTable("ModelDownload");
+                    b.ToTable("ModelDownload", (string)null);
                 });
 
             modelBuilder.Entity("DiffusionNexus.Core.Models.ModelDownloadLink", b =>
@@ -130,7 +130,7 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                     b.HasIndex("ModelDownloadId");
 
-                    b.ToTable("ModelDownloadLink");
+                    b.ToTable("ModelDownloadLink", (string)null);
                 });
 
             modelBuilder.Entity("DiffusionNexus.Core.Models.GitRepository", b =>
@@ -143,34 +143,6 @@ namespace DiffusionNexus.DataAccess.Migrations
 
             modelBuilder.Entity("DiffusionNexus.Core.Models.InstallationConfiguration", b =>
                 {
-                    b.OwnsOne("DiffusionNexus.Core.Models.MainRepositorySettings", "Repository", b1 =>
-                        {
-                            b1.Property<Guid>("InstallationConfigurationId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<string>("Branch")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b1.Property<string>("CommitHash")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b1.Property<string>("RepositoryUrl")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b1.Property<int>("Type")
-                                .HasColumnType("INTEGER");
-
-                            b1.HasKey("InstallationConfigurationId");
-
-                            b1.ToTable("InstallationConfigurations");
-
-                            b1.WithOwner()
-                                .HasForeignKey("InstallationConfigurationId");
-                        });
-
                     b.OwnsOne("DiffusionNexus.Core.Models.PathSettings", "Paths", b1 =>
                         {
                             b1.Property<Guid>("InstallationConfigurationId")
@@ -189,7 +161,7 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                             b1.HasKey("InstallationConfigurationId");
 
-                            b1.ToTable("InstallationConfigurations");
+                            b1.ToTable("InstallationConfigurations", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("InstallationConfigurationId");
@@ -226,7 +198,35 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                             b1.HasKey("InstallationConfigurationId");
 
-                            b1.ToTable("InstallationConfigurations");
+                            b1.ToTable("InstallationConfigurations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("InstallationConfigurationId");
+                        });
+
+                    b.OwnsOne("DiffusionNexus.Core.Models.MainRepositorySettings", "Repository", b1 =>
+                        {
+                            b1.Property<Guid>("InstallationConfigurationId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Branch")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("CommitHash")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("RepositoryUrl")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.Property<int>("Type")
+                                .HasColumnType("INTEGER");
+
+                            b1.HasKey("InstallationConfigurationId");
+
+                            b1.ToTable("InstallationConfigurations", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("InstallationConfigurationId");
@@ -250,7 +250,7 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                             b1.HasKey("InstallationConfigurationId");
 
-                            b1.ToTable("InstallationConfigurations");
+                            b1.ToTable("InstallationConfigurations", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("InstallationConfigurationId");
@@ -267,7 +267,7 @@ namespace DiffusionNexus.DataAccess.Migrations
 
                             b1.HasKey("InstallationConfigurationId");
 
-                            b1.ToTable("InstallationConfigurations");
+                            b1.ToTable("InstallationConfigurations", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("InstallationConfigurationId");
