@@ -75,6 +75,12 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             
             // Always install PyTorch after venv creation (or Python check if no venv)
             steps.Add(InstallationStep.InstallTorch);
+
+            // Install Triton if configured (Windows only, requires venv)
+            if (configuration.Python.InstallTriton)
+            {
+                steps.Add(InstallationStep.InstallTriton);
+            }
             
             // Install main repository requirements (e.g., ComfyUI's requirements.txt)
             steps.Add(InstallationStep.InstallRequirements);
@@ -124,6 +130,11 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                     logProgress,
                     cancellationToken),
                 InstallationStep.InstallTorch => await InstallTorchAsync(
+                    configuration,
+                    repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    logProgress,
+                    cancellationToken),
+                InstallationStep.InstallTriton => await InstallTritonAsync(
                     configuration,
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
                     logProgress,
@@ -1109,6 +1120,120 @@ public class InstallationOrchestrator : IInstallationOrchestrator
     }
 
     /// <summary>
+    /// Installs Triton for Windows (GPU kernel optimization).
+    /// </summary>
+    private async Task<InstallationStepResult> InstallTritonAsync(
+        InstallationConfiguration configuration,
+        string repositoryPath,
+        IProgress<InstallLogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (!configuration.Python.InstallTriton)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Info,
+                Message = "Triton installation is disabled. Skipping..."
+            });
+            return InstallationStepResult.Skipped(
+                InstallationStep.InstallTriton,
+                "Triton installation is disabled.");
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Installing Triton for Windows..."
+        });
+
+        // Find the pip executable in the virtual environment
+        var venvName = configuration.Python.VirtualEnvironmentName;
+        if (string.IsNullOrWhiteSpace(venvName))
+        {
+            venvName = "venv";
+        }
+
+        var venvPath = Path.Combine(repositoryPath, venvName);
+        string pipExecutable;
+
+        if (Directory.Exists(venvPath))
+        {
+            pipExecutable = _pythonService.GetVenvPipExecutable(venvPath);
+            if (!File.Exists(pipExecutable))
+            {
+                progress?.Report(new InstallLogEntry
+                {
+                    Level = LogLevel.Error,
+                    Message = $"Pip executable not found at {pipExecutable}"
+                });
+                return InstallationStepResult.Failure(
+                    InstallationStep.InstallTriton,
+                    $"Pip executable not found at {pipExecutable}");
+            }
+        }
+        else
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Virtual environment not found at {venvPath}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallTriton,
+                $"Virtual environment not found at {venvPath}. Triton requires a virtual environment.");
+        }
+
+        // Step 1: Uninstall any existing triton package
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Uninstalling existing triton package (if any)..."
+        });
+
+        await _pythonService.UninstallPackagesAsync(
+            pipExecutable,
+            ["triton"],
+            progress,
+            cancellationToken);
+
+        // Step 2: Install triton-windows package
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = "Installing triton-windows..."
+        });
+
+        var result = await _pythonService.InstallPackagesAsync(
+            pipExecutable,
+            ["triton-windows<3.5"],
+            progress,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Error,
+                Message = $"Failed to install triton-windows: {result.Message}"
+            });
+            return InstallationStepResult.Failure(
+                InstallationStep.InstallTriton,
+                $"Failed to install triton-windows: {result.Message}",
+                shouldContinue: true); // Continue with installation even if Triton fails
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = "Triton installed successfully."
+        });
+
+        return InstallationStepResult.Success(
+            InstallationStep.InstallTriton,
+            "Triton installed successfully.");
+    }
+
+    /// <summary>
     /// Installs the main repository's requirements.txt.
     /// </summary>
     private async Task<InstallationStepResult> InstallMainRequirementsAsync(
@@ -1232,6 +1357,7 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             InstallationStep.CloneAdditionalRepositories => "Cloning additional repositories...",
             InstallationStep.InstallRequirements => "Installing requirements...",
             InstallationStep.InstallTorch => "Installing PyTorch...",
+            InstallationStep.InstallTriton => "Installing Triton...",
             InstallationStep.DownloadModels => "Downloading models...",
             InstallationStep.PostInstall => "Running post-installation tasks...",
             InstallationStep.Update => "Validating existing installation...",

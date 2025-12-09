@@ -464,6 +464,65 @@ public partial class PythonService : IPythonService
         return PythonOperationResult.Success(result.StandardOutput);
     }
 
+    /// <inheritdoc />
+    public async Task<PythonOperationResult> UninstallPackagesAsync(
+        string pipExecutable,
+        string[] packages,
+        IProgress<InstallLogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pipExecutable);
+        ArgumentNullException.ThrowIfNull(packages);
+
+        if (packages.Length == 0)
+        {
+            return PythonOperationResult.Success("No packages to uninstall.");
+        }
+
+        var packagesArg = string.Join(" ", packages.Select(p => $"\"{p}\""));
+        var uninstallArgs = $"uninstall -y {packagesArg}";
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Info,
+            Message = $"Uninstalling packages: {string.Join(", ", packages)}"
+        });
+
+        // Log the exact command being executed (verbose)
+        progress?.Report(InstallLogEntry.ForCommand($"{pipExecutable} {uninstallArgs}"));
+
+        var result = await _processRunner.RunWithOutputAsync(
+            new ProcessRunOptions
+            {
+                FileName = pipExecutable,
+                Arguments = uninstallArgs,
+                Timeout = TimeSpan.FromMinutes(5)
+            },
+            line => progress?.Report(new InstallLogEntry { Level = LogLevel.Info, Message = line }),
+            line => progress?.Report(new InstallLogEntry { Level = LogLevel.Warning, Message = line }),
+            cancellationToken);
+
+        // Note: pip uninstall returns success even if package is not installed
+        // when using -y flag, so we treat this as success
+        if (!result.IsSuccess)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = $"Uninstall command returned non-zero: {result.StandardError}"
+            });
+            // Continue anyway as package might not have been installed
+        }
+
+        progress?.Report(new InstallLogEntry
+        {
+            Level = LogLevel.Success,
+            Message = "Packages uninstalled successfully"
+        });
+
+        return PythonOperationResult.Success("Packages uninstalled successfully.");
+    }
+
     #region Private Helper Methods
 
     private async Task AddPyLauncherVersionsAsync(List<PythonInstallation> installations, CancellationToken cancellationToken)

@@ -215,4 +215,18 @@ public interface IPythonService
         string script,
         IProgress<InstallLogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Uninstalls packages using pip in the specified environment.
+    /// </summary>
+    /// <param name="pipExecutable">Path to the pip executable.</param>
+    /// <param name="packages">Packages to uninstall.</param>
+    /// <param name="progress">Progress callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Result of the operation.</returns>
+    Task<PythonOperationResult> UninstallPackagesAsync(
+        string pipExecutable,
+        string[] packages,
+        IProgress<InstallLogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

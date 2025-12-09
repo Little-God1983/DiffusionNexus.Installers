@@ -119,6 +119,11 @@ public enum InstallationStep
     InstallTorch,
 
     /// <summary>
+    /// Install Triton for GPU kernel optimization.
+    /// </summary>
+    InstallTriton,
+
+    /// <summary>
     /// Download models.
     /// </summary>
     DownloadModels,
