@@ -231,6 +231,18 @@ public partial class InstallationViewModel : ViewModelBase
     private bool _verboseLogging;
 
     /// <summary>
+    /// Gets or sets whether a desktop shortcut should be created.
+    /// </summary>
+    [ObservableProperty]
+    private bool _createDesktopShortcut = true;
+
+    /// <summary>
+    /// Gets or sets whether a Start Menu shortcut should be created.
+    /// </summary>
+    [ObservableProperty]
+    private bool _createStartMenuShortcut = true;
+
+    /// <summary>
     /// Gets whether all requirements are met to start installation.
     /// Used for UI binding to show ready state.
     /// </summary>
@@ -517,7 +529,9 @@ public partial class InstallationViewModel : ViewModelBase
             {
                 OnlyModelDownload = SelectedInstallationType == InstallationType.ModelsNodesOnly,
                 SelectedVramProfile = SelectedVramProfile,
-                VerboseLogging = VerboseLogging
+                VerboseLogging = VerboseLogging,
+                CreateDesktopShortcut = CreateDesktopShortcut,
+                CreateStartMenuShortcut = CreateStartMenuShortcut
             };
 
             // Create progress reporters

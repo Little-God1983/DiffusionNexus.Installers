@@ -29,9 +29,26 @@ public record InstallationOptions
     public bool VerboseLogging { get; init; }
 
     /// <summary>
+    /// When true, creates a desktop shortcut for the application.
+    /// </summary>
+    public bool CreateDesktopShortcut { get; init; } = true;
+
+    /// <summary>
+    /// When true, creates a Start Menu shortcut for the application.
+    /// </summary>
+    public bool CreateStartMenuShortcut { get; init; } = true;
+
+    /// <summary>
     /// Creates default options for a full installation.
     /// </summary>
-    public static InstallationOptions Default => new() { OnlyModelDownload = false, SelectedVramProfile = 0, VerboseLogging = false };
+    public static InstallationOptions Default => new() 
+    { 
+        OnlyModelDownload = false, 
+        SelectedVramProfile = 0, 
+        VerboseLogging = false,
+        CreateDesktopShortcut = true,
+        CreateStartMenuShortcut = true
+    };
 }
 
 /// <summary>

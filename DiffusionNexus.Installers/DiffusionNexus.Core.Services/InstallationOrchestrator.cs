@@ -172,6 +172,7 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                 InstallationStep.PostInstall => await CreateLauncherScriptsAsync(
                     configuration,
                     repositoryPath ?? Path.Combine(targetDirectory, GetRepositoryName(configuration.Repository.RepositoryUrl)),
+                    options,
                     logProgress,
                     cancellationToken),
                 InstallationStep.Update => await ValidateExistingInstallationAsync(
@@ -1530,11 +1531,12 @@ public class InstallationOrchestrator : IInstallationOrchestrator
     }
 
     /// <summary>
-    /// Creates launcher scripts (batch files) for running the application.
+    /// Creates launcher scripts (batch files) and shortcuts for running the application.
     /// </summary>
     private Task<InstallationStepResult> CreateLauncherScriptsAsync(
         InstallationConfiguration configuration,
         string repositoryPath,
+        InstallationOptions options,
         IProgress<InstallLogEntry>? progress,
         CancellationToken cancellationToken)
     {
@@ -1567,6 +1569,32 @@ public class InstallationOrchestrator : IInstallationOrchestrator
                 Message = "Created launcher script: run_nvidia.bat"
             });
 
+            // Create shortcuts if requested
+            var shortcutName = "ComfyUI_AIK2go";
+            var iconPath = GetIconPath();
+
+            if (options.CreateDesktopShortcut)
+            {
+                CreateShortcut(
+                    GetDesktopPath(),
+                    shortcutName,
+                    batFilePath,
+                    repositoryPath,
+                    iconPath,
+                    progress);
+            }
+
+            if (options.CreateStartMenuShortcut)
+            {
+                CreateShortcut(
+                    GetStartMenuPath(),
+                    shortcutName,
+                    batFilePath,
+                    repositoryPath,
+                    iconPath,
+                    progress);
+            }
+
             progress?.Report(new InstallLogEntry
             {
                 Level = LogLevel.Info,
@@ -1589,6 +1617,118 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             return Task.FromResult(InstallationStepResult.Success(
                 InstallationStep.PostInstall,
                 $"Post-install completed with warnings: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// Gets the path to the application icon.
+    /// </summary>
+    private static string? GetIconPath()
+    {
+        // Try to find the icon in the application directory
+        var appDir = AppDomain.CurrentDomain.BaseDirectory;
+        var iconPath = Path.Combine(appDir, "Assets", "AIKnowledgeIcon.ico");
+        
+        if (File.Exists(iconPath))
+        {
+            return iconPath;
+        }
+
+        // Try alternate location
+        iconPath = Path.Combine(appDir, "AIKnowledgeIcon.ico");
+        if (File.Exists(iconPath))
+        {
+            return iconPath;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the path to the user's desktop folder.
+    /// </summary>
+    private static string GetDesktopPath()
+    {
+        return Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+    }
+
+    /// <summary>
+    /// Gets the path to the user's Start Menu Programs folder.
+    /// </summary>
+    private static string GetStartMenuPath()
+    {
+        return Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
+    }
+
+    /// <summary>
+    /// Creates a Windows shortcut (.lnk file) using PowerShell.
+    /// </summary>
+    private static void CreateShortcut(
+        string destinationFolder,
+        string shortcutName,
+        string targetPath,
+        string workingDirectory,
+        string? iconPath,
+        IProgress<InstallLogEntry>? progress)
+    {
+        try
+        {
+            var shortcutPath = Path.Combine(destinationFolder, $"{shortcutName}.lnk");
+
+            // Use PowerShell to create the shortcut (works without COM interop)
+            var iconArg = !string.IsNullOrEmpty(iconPath) && File.Exists(iconPath)
+                ? $"$s.IconLocation = '{iconPath}';"
+                : "";
+
+            var script = $@"
+$WshShell = New-Object -ComObject WScript.Shell;
+$s = $WshShell.CreateShortcut('{shortcutPath.Replace("'", "''")}');
+$s.TargetPath = '{targetPath.Replace("'", "''")}';
+$s.WorkingDirectory = '{workingDirectory.Replace("'", "''")}';
+$s.Description = 'Launch ComfyUI with AIK2go configuration';
+{iconArg}
+$s.Save();
+";
+
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{script.Replace("\"", "\\\"")}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            process?.WaitForExit(10000); // 10 second timeout
+
+            if (process?.ExitCode == 0)
+            {
+                var locationName = destinationFolder.Contains("Start Menu") ? "Start Menu" : "Desktop";
+                progress?.Report(new InstallLogEntry
+                {
+                    Level = LogLevel.Success,
+                    Message = $"Created {locationName} shortcut: {shortcutName}"
+                });
+            }
+            else
+            {
+                var error = process?.StandardError.ReadToEnd() ?? "Unknown error";
+                progress?.Report(new InstallLogEntry
+                {
+                    Level = LogLevel.Warning,
+                    Message = $"Failed to create shortcut at {destinationFolder}: {error}"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(new InstallLogEntry
+            {
+                Level = LogLevel.Warning,
+                Message = $"Failed to create shortcut: {ex.Message}"
+            });
         }
     }
 

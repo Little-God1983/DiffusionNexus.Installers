@@ -201,7 +201,7 @@
                         <ComboBox ItemsSource="{Binding SavedConfigurations}"
                                   SelectedItem="{Binding SelectedSavedConfiguration}"
                                   PlaceholderText="Select a configuration..."
-                                  Background="#1a1a2a"
+                                  Background="#1a2a2a"
                                   Foreground="White"
                                   BorderBrush="#3a3a5a"
                                   CornerRadius="6"
@@ -231,7 +231,7 @@
                             <TextBox Grid.Column="0"
                                      Text="{Binding TargetInstallFolder}"
                                      Watermark="Click Browse to select a folder..."
-                                     Background="#1a1a2a"
+                                     Background="#1a2a2a"
                                      Foreground="White"
                                      BorderBrush="#3a3a5a"
                                      CornerRadius="6"
@@ -306,7 +306,8 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
-                 <!-- Social Links Bar -->
+
+                <!-- Social Links Bar -->
                 <Border Classes="card" Padding="16">
                     <StackPanel Orientation="Horizontal" 
                                 HorizontalAlignment="Center" 
@@ -378,7 +379,7 @@ Use at your own risk.</TextBlock.Text>
                         </CheckBox>
                     </StackPanel>
                 </Border>
-              
+
                 <!-- Start/Cancel Button with Checklist -->
                 <Border Classes="card">
                     <Grid ColumnDefinitions="*,Auto,*">
@@ -481,10 +482,11 @@ Use at your own risk.</TextBlock.Text>
                             </StackPanel>
                         </StackPanel>
                         
-                        <!-- Center: Start/Cancel Button -->
+                        <!-- Center: Start/Cancel Button and Shortcuts -->
                         <StackPanel Grid.Column="1" 
                                     VerticalAlignment="Center"
-                                    HorizontalAlignment="Center">
+                                    HorizontalAlignment="Center"
+                                    Spacing="16">
                             <Button Classes="primary-btn"
                                     Content="🚀 Start Installation"
                                     Command="{Binding StartInstallationCommand}"
@@ -501,6 +503,40 @@ Use at your own risk.</TextBlock.Text>
                                     Cursor="Hand"
                                     Background="#cc4444"
                                     MinWidth="250"/>
+                            
+                            <!-- Shortcut Options (below install button) -->
+                            <StackPanel Spacing="8" 
+                                        HorizontalAlignment="Center"
+                                        IsVisible="{Binding !IsInstalling}">
+                                <TextBlock Text="Create Shortcuts"
+                                           FontSize="12"
+                                           Foreground="#8888aa"
+                                           HorizontalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" 
+                                            Spacing="16"
+                                            HorizontalAlignment="Center">
+                                    <CheckBox IsChecked="{Binding CreateDesktopShortcut}"
+                                              Foreground="#aaaacc"
+                                              Cursor="Hand">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="🖥️" FontSize="14"/>
+                                            <TextBlock Text="Desktop"
+                                                       FontSize="13"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </CheckBox>
+                                    <CheckBox IsChecked="{Binding CreateStartMenuShortcut}"
+                                              Foreground="#aaaacc"
+                                              Cursor="Hand">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="📋" FontSize="14"/>
+                                            <TextBlock Text="Start Menu"
+                                                       FontSize="13"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </CheckBox>
+                                </StackPanel>
+                            </StackPanel>
                         </StackPanel>
                         
                         <!-- Right side: Status indicator -->
