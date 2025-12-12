@@ -1621,11 +1621,11 @@ public class InstallationOrchestrator : IInstallationOrchestrator
     }
 
     /// <summary>
-    /// Gets the path to the application icon.
+    /// Gets the path to the application icon, extracting it from embedded resources if necessary.
     /// </summary>
     private static string? GetIconPath()
     {
-        // Try to find the icon in the application directory
+        // Try to find the icon in the application directory first
         var appDir = AppDomain.CurrentDomain.BaseDirectory;
         var iconPath = Path.Combine(appDir, "Assets", "AIKnowledgeIcon.ico");
         
@@ -1634,14 +1634,49 @@ public class InstallationOrchestrator : IInstallationOrchestrator
             return iconPath;
         }
 
-        // Try alternate location
+        // Try alternate location in app directory
         iconPath = Path.Combine(appDir, "AIKnowledgeIcon.ico");
         if (File.Exists(iconPath))
         {
             return iconPath;
         }
 
-        return null;
+        // Try to extract from embedded resources
+        try
+        {
+            var assembly = System.Reflection.Assembly.GetEntryAssembly();
+            if (assembly is null)
+            {
+                return null;
+            }
+
+            // Look for the embedded resource
+            var resourceNames = assembly.GetManifestResourceNames();
+            var iconResourceName = resourceNames.FirstOrDefault(n => 
+                n.EndsWith("AIKnowledgeIcon.ico", StringComparison.OrdinalIgnoreCase));
+
+            if (iconResourceName is null)
+            {
+                return null;
+            }
+
+            using var stream = assembly.GetManifestResourceStream(iconResourceName);
+            if (stream is null)
+            {
+                return null;
+            }
+
+            // Extract to temp directory
+            var tempIconPath = Path.Combine(Path.GetTempPath(), "AIKnowledgeIcon.ico");
+            using var fileStream = File.Create(tempIconPath);
+            stream.CopyTo(fileStream);
+
+            return tempIconPath;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>

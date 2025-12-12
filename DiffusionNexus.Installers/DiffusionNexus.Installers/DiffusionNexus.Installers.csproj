@@ -12,6 +12,14 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
+  <!-- Copy icon file to output directory for shortcut creation -->
+  <ItemGroup>
+    <None Include="Assets\AIKnowledgeIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\AIKnowledgeIcon.ico</Link>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <AvaloniaXaml Remove="Models\**" />
     <Compile Remove="Models\**" />
