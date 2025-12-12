@@ -888,9 +888,10 @@ public partial class InstallationViewModel : ViewModelBase
         sb.AppendLine(new string('=', 50));
         sb.AppendLine();
 
-        foreach (var entry in LogEntries)
+        // Iterate in reverse order since newest entries are first in the collection
+        for (var i = LogEntries.Count - 1; i >= 0; i--)
         {
-            sb.AppendLine(entry.Display);
+            sb.AppendLine(LogEntries[i].Display);
         }
 
         return sb.ToString();
@@ -898,7 +899,8 @@ public partial class InstallationViewModel : ViewModelBase
 
     private void AddLogEntry(string message, LogEntryLevel level)
     {
-        LogEntries.Add(new InstallationLogEntry(message, level));
+        // Insert at the beginning so newest entries appear first (rolling log)
+        LogEntries.Insert(0, new InstallationLogEntry(message, level));
     }
 
     private static void OpenUrl(string url)

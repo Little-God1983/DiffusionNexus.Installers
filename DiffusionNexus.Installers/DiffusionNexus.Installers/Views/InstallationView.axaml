@@ -154,6 +154,25 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Spinning Animation Style for Installing State -->
+        <Style Selector="TextBlock.spinning-icon">
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <RotateTransform/>
+                </Setter.Value>
+            </Setter>
+            <Style.Animations>
+                <Animation Duration="0:0:1.5" IterationCount="INFINITE">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="360"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
     </UserControl.Styles>
 
     <Border Classes="main-container">
@@ -598,7 +617,9 @@ Use at your own risk.</TextBlock.Text>
                             <StackPanel Spacing="4" HorizontalAlignment="Center">
                                 <TextBlock Text="⏳"
                                            FontSize="28"
-                                           HorizontalAlignment="Center"/>
+                                           HorizontalAlignment="Center"
+                                           Classes="spinning-icon"
+                                           RenderTransformOrigin="50%,50%"/>
                                 <TextBlock Text="Installing..."
                                            FontSize="14"
                                            FontWeight="Bold"
